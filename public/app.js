@@ -290,6 +290,7 @@ async function sendMessage() {
   html += `<div class="message-time">${new Date().toLocaleTimeString()}</div>`;
   contentDiv.innerHTML = html;
   renderMath(contentDiv);
+  if (finalContent) addCopyButton(assistantDiv, finalContent);
 
   isGenerating = false;
   el.sendBtn.style.display = 'flex';
@@ -311,6 +312,7 @@ function appendMessage(role, content, streaming = false) {
   div.className = `message ${role}`;
   const avatar = role === 'user' ? 'U' : 'AI';
   let rendered = '';
+  let copyText = '';
   if (!streaming) {
     if (role === 'assistant' && content) {
       const { thinking, content: mainContent } = extractThinking(content);
@@ -318,8 +320,10 @@ function appendMessage(role, content, streaming = false) {
         rendered += `<details class="thinking-block"><summary>Thinking...</summary><div class="thinking-content">${formatMd(thinking)}</div></details>`;
       }
       rendered += formatMd(mainContent);
+      copyText = mainContent;
     } else {
       rendered = formatMd(content);
+      copyText = content;
     }
   }
   const time = !streaming && content ? `<div class="message-time">${new Date().toLocaleTimeString()}</div>` : '';
@@ -328,6 +332,7 @@ function appendMessage(role, content, streaming = false) {
     <div class="message-content">${rendered}${streaming ? '<span class="cursor"></span>' : ''}${time}</div>`;
   el.messages.appendChild(div);
   if (!streaming && rendered) renderMath(div);
+  if (!streaming && copyText) addCopyButton(div, copyText);
   el.chatContainer.scrollTop = el.chatContainer.scrollHeight;
   return div;
 }
@@ -501,6 +506,43 @@ function renderMath(element) {
   if (window.MathJax && typeof MathJax.typesetPromise === 'function') {
     MathJax.typesetPromise([element]).catch(() => {});
   }
+}
+
+function copyTextToClipboard(text) {
+  const finish = (ok) => showToast(ok ? 'Copied to clipboard' : 'Copy failed', ok ? 'success' : 'error');
+  if (navigator.clipboard && window.isSecureContext) {
+    navigator.clipboard.writeText(text).then(() => finish(true)).catch(() => fallbackCopy(text, finish));
+  } else {
+    fallbackCopy(text, finish);
+  }
+}
+
+function fallbackCopy(text, finish) {
+  const ta = document.createElement('textarea');
+  ta.value = text;
+  ta.style.position = 'fixed';
+  ta.style.opacity = '0';
+  document.body.appendChild(ta);
+  ta.focus();
+  ta.select();
+  let ok = false;
+  try { ok = document.execCommand('copy'); } catch (e) { ok = false; }
+  ta.remove();
+  finish(ok);
+}
+
+function addCopyButton(messageEl, copyText) {
+  const btn = document.createElement('button');
+  btn.className = 'copy-btn';
+  btn.type = 'button';
+  btn.title = 'Copy';
+  btn.setAttribute('aria-label', 'Copy');
+  btn.innerHTML = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>';
+  btn.addEventListener('click', (e) => {
+    e.stopPropagation();
+    copyTextToClipboard(copyText);
+  });
+  messageEl.appendChild(btn);
 }
 
 function scrollToBottom() { el.chatContainer.scrollTop = el.chatContainer.scrollHeight; }
