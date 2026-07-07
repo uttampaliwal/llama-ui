@@ -488,8 +488,10 @@ function extractThinking(text) {
   }
   content = content.replace(completeRegex, '');
 
-  const openIdx = content.lastIndexOf('');
+  const openIdx = content.lastIndexOf('<think>');
   if (openIdx !== -1) {
+    const tail = content.slice(openIdx + '<think>'.length);
+    thinking += tail.trim() + '\n';
     content = content.slice(0, openIdx);
   }
   return { thinking: thinking.trim(), content: content.trim() };
