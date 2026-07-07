@@ -200,6 +200,27 @@
 
   <div class="toast-container" id="toastContainer"></div>
 
-  <script src="app.js?v=20260707"></script>
+  <script>
+    window.MathJax = {
+      tex: {
+        inlineMath: [['\\(', '\\)'], ['$', '$']],
+        displayMath: [['\\[', '\\]'], ['$$', '$$']]
+      },
+      options: { skipHtmlTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code'] },
+      startup: {
+        ready() {
+          MathJax.startup.defaultReady();
+          MathJax.startup.promise.then(() => {
+            document.querySelectorAll('.message').forEach(el => {
+              try { MathJax.typesetPromise([el]); } catch (e) {}
+            });
+          });
+        }
+      }
+    };
+  </script>
+  <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+
+  <script src="app.js?v=20260707b"></script>
 </body>
 </html>

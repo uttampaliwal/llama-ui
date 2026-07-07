@@ -289,6 +289,7 @@ async function sendMessage() {
   html += formatMd(finalContent);
   html += `<div class="message-time">${new Date().toLocaleTimeString()}</div>`;
   contentDiv.innerHTML = html;
+  renderMath(contentDiv);
 
   isGenerating = false;
   el.sendBtn.style.display = 'flex';
@@ -326,6 +327,7 @@ function appendMessage(role, content, streaming = false) {
     <div class="message-avatar">${avatar}</div>
     <div class="message-content">${rendered}${streaming ? '<span class="cursor"></span>' : ''}${time}</div>`;
   el.messages.appendChild(div);
+  if (!streaming && rendered) renderMath(div);
   el.chatContainer.scrollTop = el.chatContainer.scrollHeight;
   return div;
 }
@@ -396,6 +398,12 @@ function extractThinking(text) {
     content = content.slice(0, openIdx);
   }
   return { thinking: thinking.trim(), content: content.trim() };
+}
+
+function renderMath(element) {
+  if (window.MathJax && typeof MathJax.typesetPromise === 'function') {
+    MathJax.typesetPromise([element]).catch(() => {});
+  }
 }
 
 function scrollToBottom() { el.chatContainer.scrollTop = el.chatContainer.scrollHeight; }
