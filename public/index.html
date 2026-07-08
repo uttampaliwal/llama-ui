@@ -81,6 +81,12 @@
         <div class="status-indicator" id="statusIndicator" role="status" aria-live="polite">
           <span class="status-dot" aria-hidden="true"></span>
           <span class="status-text">Disconnected</span>
+          <span class="loading-dots" style="display:none" aria-hidden="true">
+            <span></span><span></span><span></span>
+          </span>
+        </div>
+        <div class="loading-progress" id="loadingProgress" style="display:none" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0">
+          <div class="loading-progress-bar" id="loadingProgressBar"></div>
         </div>
       </div>
 
