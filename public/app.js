@@ -88,18 +88,21 @@ async function checkStatus() {
     const data = await api('/api/status');
     const dot = el.statusIndicator.querySelector('.status-dot');
     const txt = el.statusIndicator.querySelector('.status-text');
+    const welcomeSubtitle = el.welcomeScreen?.querySelector('p');
     if (data.running) {
       dot.className = 'status-dot connected';
       txt.textContent = 'Connected';
       el.startBtn.disabled = true;
       el.stopBtn.disabled = false;
       el.sendBtn.disabled = false;
+      if (welcomeSubtitle) welcomeSubtitle.textContent = 'Select a model from the sidebar to begin chatting.';
     } else {
       dot.className = 'status-dot';
       txt.textContent = 'Disconnected';
       el.startBtn.disabled = false;
       el.stopBtn.disabled = true;
       el.sendBtn.disabled = true;
+      if (welcomeSubtitle) welcomeSubtitle.textContent = 'Select a model and start the server to begin chatting.';
     }
   } catch (e) {
     el.statusIndicator.querySelector('.status-dot').className = 'status-dot';

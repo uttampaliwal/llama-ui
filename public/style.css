@@ -302,18 +302,24 @@ textarea#systemPrompt:focus {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 10px 12px;
+  padding: 10px 14px;
+  margin-bottom: 4px;
   border-radius: var(--radius);
+  color: var(--text-secondary);
   cursor: pointer;
-  transition: background var(--transition);
+  transition: all var(--transition);
+  border-left: 2px solid transparent;
 }
 
 .conversation-item:hover {
   background: var(--bg-hover);
+  color: var(--text-primary);
 }
 
 .conversation-item.active {
   background: var(--accent-dim);
+  color: var(--text-primary);
+  border-left-color: var(--accent);
 }
 
 .conversation-item .title {
@@ -373,13 +379,27 @@ textarea#systemPrompt:focus {
   background: var(--bg-hover);
 }
 
-.btn-danger {
-  background: var(--danger);
-  color: white;
+#startBtn {
+  font-weight: 500;
+  transition: background var(--transition), transform var(--transition);
 }
 
-.btn-danger:hover:not(:disabled) {
-  background: #dc2626;
+#startBtn:hover:not(:disabled) {
+  transform: translateY(-1px);
+}
+
+#stopBtn {
+  background: transparent;
+  color: var(--danger);
+  border: 1px solid rgba(239, 68, 68, 0.4);
+  font-weight: 500;
+  transition: all var(--transition);
+}
+
+#stopBtn:hover:not(:disabled) {
+  background: rgba(239, 68, 68, 0.1);
+  border-color: var(--danger);
+  box-shadow: 0 0 12px rgba(239, 68, 68, 0.2);
 }
 
 .btn-full {
@@ -786,18 +806,22 @@ textarea#systemPrompt:focus {
 }
 
 .input-container {
+  position: relative;
   display: flex;
-  align-items: flex-end;
-  gap: 12px;
-  background: var(--bg-secondary);
-  border: 1px solid var(--border);
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  background: rgba(18, 18, 20, 0.7);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(99, 102, 241, 0.15);
   border-radius: var(--radius-lg);
-  padding: 12px 16px;
-  transition: border-color var(--transition);
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
 }
 
 .input-container:focus-within {
   border-color: var(--accent);
+  box-shadow: 0 0 20px rgba(99, 102, 241, 0.15), inset 0 0 20px rgba(99, 102, 241, 0.05);
 }
 
 #userInput {
@@ -1302,21 +1326,6 @@ kbd {
 
 .remove-attach:hover {
   color: var(--danger);
-}
-
-/* Futuristic input bar */
-.input-container {
-  position: relative;
-  background: rgba(26, 26, 29, 0.8);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
-  border: 1px solid rgba(99, 102, 241, 0.2);
-  transition: border-color 0.3s, box-shadow 0.3s;
-}
-
-.input-container:focus-within {
-  border-color: var(--accent);
-  box-shadow: 0 0 20px rgba(99, 102, 241, 0.15), inset 0 0 20px rgba(99, 102, 241, 0.05);
 }
 
 .input-container::before {
