@@ -141,6 +141,31 @@ function userContentHtml(content: string | ContentPart[]): string {
     .join('<br>');
 }
 
+const SVG_COPY = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>';
+const SVG_EDIT = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>';
+const SVG_REGEN = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>';
+const SVG_DELETE = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>';
+const SVG_SHARE = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>';
+
+function userActionsHtml(): string {
+  return `
+    <button class="action-btn copy-message-btn" title="Copy" aria-label="Copy message">${SVG_COPY}</button>
+    <button class="action-btn edit-message-btn" title="Edit" aria-label="Edit message">${SVG_EDIT}</button>
+    <div class="action-divider"></div>
+    <button class="action-btn delete-message-btn danger" title="Delete" aria-label="Delete message">${SVG_DELETE}</button>
+  `;
+}
+
+function assistantActionsHtml(): string {
+  return `
+    <button class="action-btn copy-message-btn" title="Copy" aria-label="Copy message">${SVG_COPY}</button>
+    <button class="action-btn regenerate-btn" title="Regenerate" aria-label="Regenerate response">${SVG_REGEN}</button>
+    <div class="action-divider"></div>
+    <button class="action-btn share-message-btn" title="Share" aria-label="Share message">${SVG_SHARE}</button>
+    <button class="action-btn delete-message-btn danger" title="Delete" aria-label="Delete message">${SVG_DELETE}</button>
+  `;
+}
+
 function buildMessageNode(msg: ChatMessage, streaming: boolean): HTMLElement {
   const div = document.createElement('div');
   div.className = `message ${msg.role}`;
@@ -158,21 +183,21 @@ function buildMessageNode(msg: ChatMessage, streaming: boolean): HTMLElement {
     actions.className = 'message-actions';
     actions.setAttribute('role', 'group');
     actions.setAttribute('aria-label', 'Message actions');
-    actions.innerHTML = '<span class="edit-message-btn" title="Edit" role="button" tabindex="0" aria-label="Edit message">✏️</span><span class="delete-message-btn" title="Delete" role="button" tabindex="0" aria-label="Delete message">🗑️</span>';
+    actions.innerHTML = userActionsHtml();
     div.appendChild(actions);
     requestAnimationFrame(() => renderMath(contentDiv));
     return div;
   }
 
   if (streaming && !msg.content) {
-    div.innerHTML = `<div class="message-content"><div class="thinking-container" style="display:none"><details class="thinking-block"><summary>Thinking...</summary><div class="thinking-content"></div></details></div><div class="response-container" aria-live="polite"></div></div><div class="message-actions" role="group" aria-label="Message actions"><span class="copy-message-btn" title="Copy" role="button" tabindex="0" aria-label="Copy message">📋</span><span class="regenerate-btn" title="Regenerate" role="button" tabindex="0" aria-label="Regenerate response">🔄</span><span class="delete-message-btn" title="Delete" role="button" tabindex="0" aria-label="Delete message">🗑️</span></div>`;
+    div.innerHTML = `<div class="message-content"><div class="thinking-container" style="display:none"><details class="thinking-block"><summary>Thinking...</summary><div class="thinking-content"></div></details></div><div class="response-container" aria-live="polite"></div></div><div class="message-actions" role="group" aria-label="Message actions">${assistantActionsHtml()}</div>`;
     return div;
   }
 
   const { thinking: t, content: c } = extractThinking(msg.content as string);
   const th = t || thinking;
   const text = c || (msg.content as string);
-  div.innerHTML = `<div class="message-content"></div><div class="message-actions" role="group" aria-label="Message actions"><span class="copy-message-btn" title="Copy" role="button" tabindex="0" aria-label="Copy message">📋</span><span class="regenerate-btn" title="Regenerate" role="button" tabindex="0" aria-label="Regenerate response">🔄</span><span class="delete-message-btn" title="Delete" role="button" tabindex="0" aria-label="Delete message">🗑️</span></div>`;
+  div.innerHTML = `<div class="message-content"></div><div class="message-actions" role="group" aria-label="Message actions">${assistantActionsHtml()}</div>`;
   const contentDiv = div.querySelector('.message-content') as HTMLElement;
   fillContent(contentDiv, th, text, msg.createdAt, msg.id);
   return div;

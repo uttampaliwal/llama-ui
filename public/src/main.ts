@@ -210,12 +210,13 @@ async function init(): Promise<void> {
 
   el.chatMessages.addEventListener('click', (e) => {
     const target = e.target as HTMLElement;
+    const btn = target.closest('.action-btn') as HTMLElement | null;
     const msgEl = target.closest('.message') as HTMLElement | null;
     if (!msgEl) return;
     const msgId = msgEl.dataset.messageId;
     if (!msgId) return;
 
-    if (target.classList.contains('delete-message-btn')) {
+    if (btn?.classList.contains('delete-message-btn')) {
       const conv = getCurrentConv();
       if (!conv) return;
       conv.messages = conv.messages.filter((m) => m.id !== msgId);
@@ -224,7 +225,7 @@ async function init(): Promise<void> {
       return;
     }
 
-    if (target.classList.contains('copy-message-btn')) {
+    if (btn?.classList.contains('copy-message-btn')) {
       const conv = getCurrentConv();
       if (!conv) return;
       const msg = conv.messages.find((m) => m.id === msgId);
@@ -236,7 +237,7 @@ async function init(): Promise<void> {
       return;
     }
 
-    if (target.classList.contains('edit-message-btn')) {
+    if (btn?.classList.contains('edit-message-btn')) {
       const conv = getCurrentConv();
       if (!conv) return;
       const msg = conv.messages.find((m) => m.id === msgId);
@@ -251,8 +252,25 @@ async function init(): Promise<void> {
       return;
     }
 
-    if (target.classList.contains('regenerate-btn')) {
+    if (btn?.classList.contains('regenerate-btn')) {
       regenerateFrom(msgId);
+      return;
+    }
+
+    if (btn?.classList.contains('share-message-btn')) {
+      const conv = getCurrentConv();
+      if (!conv) return;
+      const msg = conv.messages.find((m) => m.id === msgId);
+      if (msg) {
+        const text = textOf(msg.content);
+        if (navigator.share) {
+          navigator.share({ text }).catch(() => {});
+        } else {
+          navigator.clipboard.writeText(text).then(() => {
+            showToast('Copied to clipboard', 'success');
+          });
+        }
+      }
       return;
     }
   });

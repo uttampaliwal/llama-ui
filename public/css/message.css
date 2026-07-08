@@ -177,25 +177,58 @@
   right: 8px;
   display: flex;
   gap: 2px;
+  padding: 4px;
+  background: var(--bg-primary);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  box-shadow: 0 2px 8px rgba(0,0,0,0.15);
   opacity: 0;
-  transition: opacity 0.15s ease;
+  transform: translateY(-4px);
+  transition: opacity 0.2s ease, transform 0.2s ease;
+  pointer-events: none;
+  z-index: 10;
 }
 
 .message:hover .message-actions {
   opacity: 1;
+  transform: translateY(0);
+  pointer-events: auto;
 }
 
-.message-actions span {
-  cursor: pointer;
-  padding: 2px 4px;
+.message-actions .action-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border: none;
+  background: transparent;
   border-radius: 4px;
-  font-size: 12px;
-  line-height: 1;
-  user-select: none;
+  cursor: pointer;
+  color: var(--text-secondary);
+  transition: all 0.15s ease;
 }
 
-.message-actions span:hover {
+.message-actions .action-btn:hover {
   background: var(--bg-hover);
+  color: var(--text-primary);
+}
+
+.message-actions .action-btn.danger:hover {
+  color: var(--danger);
+  background: rgba(239, 68, 68, 0.1);
+}
+
+.message-actions .action-btn svg {
+  width: 14px;
+  height: 14px;
+}
+
+.message-actions .action-divider {
+  width: 1px;
+  height: 20px;
+  background: var(--border);
+  margin: 4px 2px;
 }
 
 .edit-message-btn {
