@@ -3,25 +3,50 @@ import { showToast } from './toast.js';
 import { buildMessageHtml, extractThinking, formatMd } from './markdown.js';
 import { renderMath, highlightCodeBlocks } from './latex.js';
 import { textOf, type ChatMessage, type Conversation, type ExportFormat } from './types.js';
+import {
+  getAllConversations,
+  putConversations,
+  deleteConversationById,
+} from './db.js';
 
-let conversations: Conversation[] = (() => {
-  try {
-    const raw = localStorage.getItem('conversations');
-    if (!raw) return [];
-    const v = JSON.parse(raw);
-    if (Array.isArray(v)) return v as Conversation[];
-    // Migrate from old object format { id: conv, ... } to array
-    if (v && typeof v === 'object' && !Array.isArray(v)) {
-      const arr = Object.values(v) as Conversation[];
-      localStorage.setItem('conversations', JSON.stringify(arr));
-      return arr;
-    }
-    return [];
-  } catch (e) {
-    return [];
-  }
-})();
+let conversations: Conversation[] = [];
 let currentConversationId: string | null = localStorage.getItem('currentConversationId') || null;
+
+let loadPromise: Promise<void> | null = null;
+
+export function loadConversations(): Promise<void> {
+  if (!loadPromise) {
+    loadPromise = (async () => {
+      try {
+        const stored = await getAllConversations();
+        if (stored && stored.length) {
+          conversations = stored;
+          return;
+        }
+      } catch (e) {
+        console.warn('IndexedDB load failed:', e);
+      }
+      // One-time migration from legacy localStorage store
+      try {
+        const raw = localStorage.getItem('conversations');
+        if (raw) {
+          const v = JSON.parse(raw);
+          const arr: Conversation[] = Array.isArray(v)
+            ? (v as Conversation[])
+            : v && typeof v === 'object'
+              ? (Object.values(v) as Conversation[])
+              : [];
+          conversations = arr;
+          localStorage.removeItem('conversations');
+          await putConversations(arr);
+        }
+      } catch (e) {
+        console.warn('Migration from localStorage failed:', e);
+      }
+    })();
+  }
+  return loadPromise;
+}
 
 export function getCurrentConv(): Conversation | null {
   if (!Array.isArray(conversations)) return null;
@@ -34,8 +59,12 @@ export function setCurrentConvId(id: string | null): void {
   else localStorage.removeItem('currentConversationId');
 }
 
-export function saveConversations(): void {
-  localStorage.setItem('conversations', JSON.stringify(conversations));
+export async function saveConversations(): Promise<void> {
+  try {
+    await putConversations(conversations);
+  } catch (e) {
+    console.warn('Failed to persist conversations:', e);
+  }
 }
 
 export function getConversations(): Conversation[] {
@@ -177,7 +206,7 @@ export function deleteConversation(id: string): void {
     showWelcome();
     el.restartBtn.classList.add('hidden');
   }
-  saveConversations();
+  deleteConversationById(id);
   import('./sidebar.js').then((m) => m.renderSidebar());
 }
 

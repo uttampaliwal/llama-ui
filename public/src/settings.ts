@@ -3,6 +3,7 @@ import { showToast } from './toast.js';
 import { el, $ } from './utils.js';
 import { updateModelInfo } from './models.js';
 import type { Settings, Preset } from './types.js';
+import { getPresets, savePreset as putPreset, deletePresetByName } from './db.js';
 
 export async function loadSettings(): Promise<void> {
   try {
@@ -71,8 +72,8 @@ export async function applySettings(): Promise<void> {
   }
 }
 
-export function renderPresets(): void {
-  const presets = JSON.parse(localStorage.getItem('presets') || '{}') as Record<string, Preset>;
+export async function renderPresets(): Promise<void> {
+  const presets = await getPresets();
   const sel = el.presetSelect;
   sel.innerHTML = '<option value="">Load preset...</option>';
   Object.keys(presets).forEach((name) => {
@@ -83,8 +84,8 @@ export function renderPresets(): void {
   });
 }
 
-export function applyPreset(name: string): void {
-  const presets = JSON.parse(localStorage.getItem('presets') || '{}') as Record<string, Preset>;
+export async function applyPreset(name: string): Promise<void> {
+  const presets = await getPresets();
   const p = presets[name];
   if (!p) return;
   $<HTMLInputElement>('temperature').value = String(p.temperature ?? '');
@@ -103,11 +104,10 @@ export function applyPreset(name: string): void {
   showToast('Preset "' + name + '" applied', 'success');
 }
 
-export function savePreset(): void {
+export async function savePreset(): Promise<void> {
   const name = prompt('Preset name:');
   if (!name) return;
-  const presets = JSON.parse(localStorage.getItem('presets') || '{}') as Record<string, Preset>;
-  presets[name] = {
+  const preset: Preset = {
     temperature: $<HTMLInputElement>('temperature').value,
     topP: $<HTMLInputElement>('topP').value,
     topK: $<HTMLInputElement>('topK').value,
@@ -118,19 +118,17 @@ export function savePreset(): void {
     repeatPenalty: $<HTMLInputElement>('repeatPenalty').value,
     systemPrompt: el.systemPrompt.value,
   };
-  localStorage.setItem('presets', JSON.stringify(presets));
-  renderPresets();
+  await putPreset(name, preset);
+  await renderPresets();
   showToast('Preset "' + name + '" saved', 'success');
 }
 
-export function deletePreset(): void {
+export async function deletePreset(): Promise<void> {
   const sel = el.presetSelect;
   const name = sel.value;
   if (!name) return;
   if (!confirm('Delete preset "' + name + '"?')) return;
-  const presets = JSON.parse(localStorage.getItem('presets') || '{}') as Record<string, Preset>;
-  delete presets[name];
-  localStorage.setItem('presets', JSON.stringify(presets));
-  renderPresets();
+  await deletePresetByName(name);
+  await renderPresets();
   showToast('Preset "' + name + '" deleted');
 }

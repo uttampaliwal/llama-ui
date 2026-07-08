@@ -19,12 +19,15 @@ import {
   exportConversation,
   newConversation,
   selectConversation,
+  loadConversations,
 } from './conversation.js';
 import { checkStatus, startServer, stopServer } from './server.js';
 import { renderSidebar, setupSidebarListeners } from './sidebar.js';
 import { textOf, type ExportFormat } from './types.js';
 
-function init(): void {
+async function init(): Promise<void> {
+  await loadConversations().catch(() => {});
+
   try {
     const savedConvId = localStorage.getItem('currentConversationId');
     const convs = getConversations();
@@ -37,7 +40,7 @@ function init(): void {
   }
 
   renderSidebar();
-  renderPresets();
+  renderPresets().catch(() => {});
   loadModels().catch(() => {});
   loadSettings().catch(() => {});
   checkStatus().catch(() => {});
@@ -97,11 +100,11 @@ function init(): void {
   el.applySettings.addEventListener('click', applySettings);
 
   el.presetSelect.addEventListener('change', () => {
-    if (el.presetSelect.value) applyPreset(el.presetSelect.value);
+    if (el.presetSelect.value) applyPreset(el.presetSelect.value).catch(() => {});
   });
 
-  el.savePresetBtn.addEventListener('click', savePreset);
-  el.deletePresetBtn.addEventListener('click', deletePreset);
+  el.savePresetBtn.addEventListener('click', () => { savePreset().catch(() => {}); });
+  el.deletePresetBtn.addEventListener('click', () => { deletePreset().catch(() => {}); });
 
   el.settingsBtn.addEventListener('click', () => el.settingsModal.classList.add('active'));
 
