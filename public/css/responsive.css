@@ -4,6 +4,7 @@
     display: flex;
   }
 
+  /* Sidebar */
   .sidebar {
     position: fixed;
     left: 0;
@@ -12,17 +13,246 @@
     z-index: 50;
     transform: translateX(-100%);
     box-shadow: var(--shadow);
+    transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   }
 
   .sidebar.open {
     transform: translateX(0);
   }
 
-  .message {
-    padding: 12px 16px;
+  .sidebar-backdrop {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.5);
+    z-index: 49;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.3s ease;
+    backdrop-filter: blur(4px);
+  }
+
+  .sidebar-backdrop.visible {
+    opacity: 1;
+    pointer-events: all;
   }
 
   .sidebar-resize-handle {
     display: none;
+  }
+
+  /* Touch targets - minimum 44px */
+  .btn {
+    min-height: 44px;
+    padding: 12px 20px;
+  }
+
+  .icon-btn {
+    width: 44px;
+    height: 44px;
+  }
+
+  .message {
+    padding: 12px 16px;
+  }
+
+  .message-avatar {
+    width: 36px;
+    height: 36px;
+  }
+
+  /* Input area */
+  .input-area {
+    padding: 12px 16px 16px;
+  }
+
+  .input-container {
+    padding: 12px 16px;
+  }
+
+  #userInput {
+    font-size: 16px; /* Prevent zoom on iOS */
+  }
+
+  /* Settings modal - full screen */
+  .modal-settings {
+    width: 100vw;
+    height: 100vh;
+    max-width: none;
+    max-height: none;
+    border-radius: 0;
+    margin: 0;
+  }
+
+  .modal-settings .settings-layout {
+    flex-direction: column;
+  }
+
+  .modal-settings .settings-nav {
+    width: 100%;
+    flex-direction: row;
+    overflow-x: auto;
+    padding: 8px;
+    border-right: none;
+    border-bottom: 1px solid var(--border);
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .modal-settings .settings-nav-item {
+    padding: 12px 16px;
+    white-space: nowrap;
+  }
+
+  .modal-settings .settings-content {
+    padding: 16px;
+  }
+
+  /* Search modal */
+  .search-modal {
+    width: 100vw;
+    max-width: none;
+    height: 100vh;
+    max-height: none;
+    border-radius: 0;
+    margin: 0;
+  }
+
+  .search-overlay {
+    padding-top: 0;
+  }
+
+  .search-results {
+    max-height: none;
+    flex: 1;
+  }
+
+  /* Conversation items - swipe support */
+  .conversation-item {
+    position: relative;
+    overflow: hidden;
+    touch-action: pan-y;
+  }
+
+  .conversation-item-content {
+    position: relative;
+    z-index: 1;
+    background: var(--bg-secondary);
+    transition: transform 0.2s ease;
+  }
+
+  .conversation-item-actions {
+    position: absolute;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 0 12px;
+    z-index: 0;
+  }
+
+  .conversation-item.swiped .conversation-item-content {
+    transform: translateX(-120px);
+  }
+
+  /* Larger text for readability */
+  .message-content {
+    font-size: 15px;
+  }
+
+  /* Model cards */
+  .model-card {
+    padding: 14px 16px;
+  }
+
+  /* Code blocks */
+  .code-block-header {
+    padding: 10px 14px;
+  }
+
+  .code-block-btn {
+    padding: 8px 12px;
+    font-size: 12px;
+  }
+
+  /* Toast - full width */
+  .toast-container {
+    left: 16px;
+    right: 16px;
+    bottom: 16px;
+    top: auto;
+  }
+
+  .toast {
+    width: 100%;
+  }
+
+  /* Welcome screen */
+  .welcome-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .welcome-greeting h1 {
+    font-size: 24px;
+  }
+
+  /* Image viewer */
+  .image-viewer-toolbar {
+    padding: 8px 12px;
+  }
+
+  .image-viewer-btn {
+    width: 44px;
+    height: 44px;
+  }
+
+  /* Swipe hint */
+  .swipe-hint {
+    display: block;
+    text-align: center;
+    padding: 8px;
+    font-size: 12px;
+    color: var(--text-muted);
+    animation: swipeHint 2s ease-in-out;
+  }
+
+  @keyframes swipeHint {
+    0%, 100% { opacity: 0; }
+    50% { opacity: 1; }
+  }
+}
+
+/* Tablet adjustments */
+@media (min-width: 769px) and (max-width: 1024px) {
+  .sidebar {
+    width: 280px;
+    min-width: 280px;
+  }
+}
+
+/* Hover disabled on touch devices */
+@media (hover: none) {
+  .btn:hover {
+    transform: none;
+    box-shadow: none;
+  }
+
+  .icon-btn:hover {
+    transform: none;
+  }
+
+  .message.assistant:hover {
+    background: var(--bg-secondary);
+  }
+}
+
+/* Safe area for notched devices */
+@supports (padding: env(safe-area-inset-bottom)) {
+  .input-area {
+    padding-bottom: calc(16px + env(safe-area-inset-bottom));
+  }
+
+  .toast-container {
+    bottom: calc(16px + env(safe-area-inset-bottom));
   }
 }

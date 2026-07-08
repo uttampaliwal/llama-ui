@@ -26,6 +26,7 @@ import {
 } from './conversation.js';
 import { checkStatus, startServer, stopServer } from './server.js';
 import { renderSidebar, setupSidebarListeners } from './sidebar.js';
+import { initMobileGestures } from './mobile.js';
 import { textOf, type ExportFormat } from './types.js';
 import { logError, logInfo } from './logger.js';
 
@@ -124,6 +125,7 @@ async function init(): Promise<void> {
   setupSidebarListeners();
   initSettingsNav();
   initTheme();
+  initMobileGestures();
   updateWelcomeScreen();
 
   // Folder creation
