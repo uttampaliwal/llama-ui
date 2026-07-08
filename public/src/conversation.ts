@@ -428,3 +428,87 @@ export function exportConversation(format: ExportFormat): void {
     downloadFile(JSON.stringify(conv, null, 2), `${conv.title.replace(/[^a-z0-9]/gi, '_')}.json`, 'application/json');
   }
 }
+
+// ---- Conversation metadata helpers ------------------------------------------
+
+export function togglePin(id: string): void {
+  const conv = AppState.conversations.list.find((c) => c.id === id);
+  if (!conv) return;
+  conv.pinned = !conv.pinned;
+  saveConversations();
+  import('./sidebar.js').then((m) => m.renderSidebar());
+}
+
+export function toggleStar(id: string): void {
+  const conv = AppState.conversations.list.find((c) => c.id === id);
+  if (!conv) return;
+  conv.starred = !conv.starred;
+  saveConversations();
+  import('./sidebar.js').then((m) => m.renderSidebar());
+}
+
+export function archiveConversation(id: string): void {
+  const conv = AppState.conversations.list.find((c) => c.id === id);
+  if (!conv) return;
+  conv.archived = true;
+  if (AppState.conversations.currentId === id) {
+    setCurrentConvId(null);
+    clearChatView();
+    showWelcome();
+    el.restartBtn.classList.add('hidden');
+  }
+  saveConversations();
+  import('./sidebar.js').then((m) => m.renderSidebar());
+}
+
+export function unarchiveConversation(id: string): void {
+  const conv = AppState.conversations.list.find((c) => c.id === id);
+  if (!conv) return;
+  conv.archived = false;
+  saveConversations();
+  import('./sidebar.js').then((m) => m.renderSidebar());
+}
+
+export function moveToFolder(id: string, folderId: string | null): void {
+  const conv = AppState.conversations.list.find((c) => c.id === id);
+  if (!conv) return;
+  conv.folderId = folderId || undefined;
+  saveConversations();
+  import('./sidebar.js').then((m) => m.renderSidebar());
+}
+
+export function batchDelete(ids: string[]): void {
+  if (!ids.length) return;
+  if (!confirm(`Delete ${ids.length} conversation(s)?`)) return;
+  const idSet = new Set(ids);
+  AppState.conversations.list = AppState.conversations.list.filter((c) => !idSet.has(c.id));
+  if (idSet.has(AppState.conversations.currentId || '')) {
+    setCurrentConvId(null);
+    clearChatView();
+    showWelcome();
+    el.restartBtn.classList.add('hidden');
+  }
+  for (const id of ids) deleteConversationById(id);
+  AppState.ui.selectedIds.clear();
+  AppState.ui.multiSelectMode = false;
+  import('./sidebar.js').then((m) => m.renderSidebar());
+}
+
+export function batchExport(ids: string[], format: ExportFormat): void {
+  const convs = AppState.conversations.list.filter((c) => ids.includes(c.id));
+  if (!convs.length) return;
+  if (format === 'markdown') {
+    let md = '';
+    for (const conv of convs) {
+      md += `# ${conv.title}\n\n`;
+      conv.messages.forEach((m) => {
+        md += `### ${m.role === 'user' ? 'You' : 'Assistant'}\n\n`;
+        md += textOf(m.content).replace(/<[^>]*>/g, '') + '\n\n';
+      });
+      md += '---\n\n';
+    }
+    downloadFile(md, 'conversations.md', 'text/markdown');
+  } else {
+    downloadFile(JSON.stringify(convs, null, 2), 'conversations.json', 'application/json');
+  }
+}

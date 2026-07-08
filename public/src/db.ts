@@ -1,11 +1,12 @@
-import type { Conversation, Preset } from './types.js';
+import type { Conversation, Preset, Folder } from './types.js';
 
 type StoredPreset = Preset & { name: string };
 
 const DB_NAME = 'llama-ui';
-const DB_VERSION = 1;
+const DB_VERSION = 2;
 const STORE_CONVERSATIONS = 'conversations';
 const STORE_PRESETS = 'presets';
+const STORE_FOLDERS = 'folders';
 
 let dbPromise: Promise<IDBDatabase> | null = null;
 
@@ -20,6 +21,9 @@ export function getDB(): Promise<IDBDatabase> {
         }
         if (!db.objectStoreNames.contains(STORE_PRESETS)) {
           db.createObjectStore(STORE_PRESETS, { keyPath: 'name' });
+        }
+        if (!db.objectStoreNames.contains(STORE_FOLDERS)) {
+          db.createObjectStore(STORE_FOLDERS, { keyPath: 'id' });
         }
       };
       req.onsuccess = () => resolve(req.result);
@@ -125,4 +129,30 @@ function txDone(store: IDBObjectStore): Promise<void> {
     t.onerror = () => reject(t.error);
     t.onabort = () => reject(t.error);
   });
+}
+
+// ---- Folders ----------------------------------------------------------------
+
+function folderTx(db: IDBDatabase, mode: IDBTransactionMode): IDBObjectStore {
+  return db.transaction(STORE_FOLDERS, mode).objectStore(STORE_FOLDERS);
+}
+
+export async function getAllFolders(): Promise<Folder[]> {
+  const db = await getDB();
+  const store = folderTx(db, 'readonly');
+  return reqToPromise(store.getAll() as IDBRequest<Folder[]>);
+}
+
+export async function putFolders(folders: Folder[]): Promise<void> {
+  const db = await getDB();
+  const store = folderTx(db, 'readwrite');
+  for (const f of folders) store.put(f);
+  await txDone(store);
+}
+
+export async function deleteFolderById(id: string): Promise<void> {
+  const db = await getDB();
+  const store = folderTx(db, 'readwrite');
+  store.delete(id);
+  await txDone(store);
 }

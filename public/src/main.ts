@@ -50,6 +50,22 @@ async function init(): Promise<void> {
   setupAttachmentListeners();
   setupSidebarListeners();
 
+  // Folder creation
+  const newFolderBtn = $('newFolderBtn');
+  if (newFolderBtn) {
+    newFolderBtn.addEventListener('click', async () => {
+      const name = prompt('Folder name:');
+      if (!name || !name.trim()) return;
+      const { AppState } = await import('./state.js');
+      const folder = { id: Date.now().toString(), name: name.trim(), createdAt: new Date().toISOString() };
+      AppState.ui.folders.push(folder);
+      const { putFolders } = await import('./db.js');
+      await putFolders(AppState.ui.folders).catch((e) => logError('putFolders', e));
+      const { renderSidebar } = await import('./sidebar.js');
+      renderSidebar();
+    });
+  }
+
   // Background warm-up: preload highlight.js so the first message renders fast
   // @ts-ignore — runtime URL path resolved by the static server
   import('/vendor/highlight/highlight.esm.js')

@@ -1,4 +1,4 @@
-import type { Conversation, ModelInfo, Attachment } from './types.js';
+import type { Conversation, ModelInfo, Attachment, Folder } from './types.js';
 
 // ---------------------------------------------------------------------------
 // Centralised application state – single source of truth for all mutable
@@ -24,6 +24,18 @@ export const AppState = {
 
   /** Loaded model metadata keyed by path */
   models: {} as Record<string, ModelInfo>,
+
+  /** Sidebar UI state */
+  ui: {
+    /** IDs of conversations selected for multi-select operations */
+    selectedIds: new Set<string>(),
+    /** Whether multi-select mode is active */
+    multiSelectMode: false,
+    /** Currently expanded folder ID (null = collapsed all) */
+    expandedFolderId: null as string | null,
+    /** Folders list */
+    folders: [] as Folder[],
+  },
 };
 
 // ---------------------------------------------------------------------------

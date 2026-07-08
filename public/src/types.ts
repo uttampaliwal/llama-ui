@@ -36,7 +36,19 @@ export interface Conversation {
   messages: ChatMessage[];
   createdAt: string;
   updatedAt: string;
+  pinned?: boolean;
+  starred?: boolean;
+  archived?: boolean;
+  folderId?: string;
+  order?: number;
   _backup?: ChatMessage[];
+}
+
+export interface Folder {
+  id: string;
+  name: string;
+  createdAt: string;
+  order?: number;
 }
 
 export interface ModelInfo {
