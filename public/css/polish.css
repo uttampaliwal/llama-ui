@@ -1,0 +1,226 @@
+/* Small Polish Items */
+
+/* 8px Spacing System - Applied globally */
+* {
+  box-sizing: border-box;
+}
+
+/* Smooth focus rings for keyboard users */
+*:focus-visible {
+  outline: none;
+  box-shadow: var(--focus-ring);
+  border-radius: var(--radius);
+  transition: box-shadow 0.2s ease;
+}
+
+/* Remove focus ring for mouse users */
+*:focus:not(:focus-visible) {
+  outline: none;
+  box-shadow: none;
+}
+
+/* Better scrollbar styling */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--border);
+  border-radius: 4px;
+  border: 2px solid transparent;
+  background-clip: content-box;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--text-muted);
+  background-clip: content-box;
+}
+
+::-webkit-scrollbar-corner {
+  background: transparent;
+}
+
+/* Firefox scrollbar */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: var(--border) transparent;
+}
+
+/* Rounded avatar corners */
+.avatar {
+  border-radius: var(--radius);
+  object-fit: cover;
+}
+
+/* Elevation differences between panels */
+.sidebar {
+  box-shadow: var(--elevation-3);
+}
+
+main {
+  box-shadow: inset 1px 0 0 var(--border);
+}
+
+.modal {
+  box-shadow: var(--elevation-4);
+}
+
+.modal-overlay {
+  background: rgba(0, 0, 0, 0.5);
+  backdrop-filter: blur(4px);
+}
+
+/* Input bar elevation */
+.input-area {
+  box-shadow: var(--elevation-2);
+}
+
+/* Card elevation */
+.model-card {
+  box-shadow: var(--elevation-1);
+  transition: box-shadow var(--transition), transform var(--transition);
+}
+
+.model-card:hover {
+  box-shadow: var(--elevation-2);
+  transform: translateY(-1px);
+}
+
+.model-card.selected {
+  box-shadow: var(--elevation-3);
+}
+
+/* Toast elevation */
+.toast {
+  box-shadow: var(--elevation-4);
+}
+
+/* Uniform icon sizes */
+.icon-btn svg,
+.action-btn svg,
+.btn svg {
+  width: var(--icon-md);
+  height: var(--icon-md);
+}
+
+.small-icon svg {
+  width: var(--icon-sm);
+  height: var(--icon-sm);
+}
+
+.large-icon svg {
+  width: var(--icon-lg);
+  height: var(--icon-lg);
+}
+
+/* Smooth transitions on interactive elements */
+button,
+a,
+input,
+textarea,
+select {
+  transition: all var(--transition);
+}
+
+/* Better button interactions */
+button:active:not(:disabled) {
+  transform: scale(0.98);
+}
+
+/* Subtle hover effects */
+.list-item:hover,
+.dropdown-item:hover,
+.nav-item:hover {
+  background: var(--bg-hover);
+}
+
+/* Consistent spacing */
+.content-section {
+  padding: var(--space-md);
+}
+
+.content-header {
+  margin-bottom: var(--space-md);
+}
+
+.content-footer {
+  margin-top: var(--space-md);
+}
+
+/* Typography rhythm */
+h1 { margin: 0 0 var(--space-md) 0; }
+h2 { margin: 0 0 var(--space-md) 0; }
+h3 { margin: 0 0 var(--space-sm) 0; }
+h4 { margin: 0 0 var(--space-sm) 0; }
+p { margin: 0 0 var(--space-sm) 0; }
+
+/* List spacing */
+ul, ol {
+  padding-left: var(--space-md);
+}
+
+li {
+  margin-bottom: var(--space-xs);
+}
+
+/* Form element spacing */
+.form-group {
+  margin-bottom: var(--space-md);
+}
+
+.form-label {
+  display: block;
+  margin-bottom: var(--space-xs);
+  font-weight: 500;
+}
+
+.form-input {
+  width: 100%;
+  padding: var(--space-sm) var(--space-md);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--bg-primary);
+  color: var(--text-primary);
+  font-size: 14px;
+}
+
+.form-input:focus {
+  border-color: var(--accent);
+  box-shadow: var(--focus-ring);
+}
+
+/* Badge spacing */
+.badge {
+  padding: var(--space-xs) var(--space-sm);
+  border-radius: var(--radius);
+  font-size: 12px;
+  font-weight: 500;
+}
+
+/* Divider */
+.divider {
+  height: 1px;
+  background: var(--border);
+  margin: var(--space-md) 0;
+}
+
+/* Mobile adjustments */
+@media (max-width: 768px) {
+  :root {
+    --space-md: 12px;
+    --space-lg: 16px;
+    --space-xl: 24px;
+    --space-2xl: 32px;
+  }
+
+  ::-webkit-scrollbar {
+    width: 4px;
+    height: 4px;
+  }
+}
