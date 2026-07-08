@@ -7,6 +7,9 @@
   <meta http-equiv="Pragma" content="no-cache">
   <meta http-equiv="Expires" content="0">
   <title>Llama.cpp UI</title>
+  <style>
+    .sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
+  </style>
   <link rel="stylesheet" href="css/variables.css?v=20260708c">
   <link rel="stylesheet" href="css/base.css?v=20260708c">
   <link rel="stylesheet" href="css/button.css?v=20260708c">
@@ -21,107 +24,107 @@
 </head>
 <body>
   <div class="app">
-    <aside class="sidebar" id="sidebar">
+    <aside class="sidebar" id="sidebar" role="complementary" aria-label="Sidebar">
       <div class="sidebar-header">
-        <div class="logo">
-          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <div class="logo" role="img" aria-label="Llama.cpp UI">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
             <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/>
           </svg>
           <span>Llama.cpp</span>
         </div>
         <div class="sidebar-header-actions">
-          <button class="icon-btn mobile-only" id="menuBtn" title="Menu">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <button class="icon-btn mobile-only" id="menuBtn" title="Menu" aria-label="Open navigation menu">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
               <line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/>
             </svg>
           </button>
-          <button class="icon-btn" id="collapseBtn" title="Collapse sidebar">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <button class="icon-btn" id="collapseBtn" title="Collapse sidebar" aria-label="Collapse sidebar">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
               <polyline points="15 18 9 12 15 6"/>
             </svg>
           </button>
         </div>
-        <button class="icon-btn" id="newChatBtn" title="New Chat">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <button class="icon-btn" id="newChatBtn" title="New Chat" aria-label="Start a new chat conversation">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
             <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
           </svg>
         </button>
       </div>
 
       <div class="sidebar-section">
-        <label class="section-label">Model</label>
+        <label class="section-label" for="modelSelect">Model</label>
         <div class="model-select-row">
-          <select id="modelSelect" class="model-select">
+          <select id="modelSelect" class="model-select" aria-label="Select a model">
             <option value="">Select a model...</option>
           </select>
-          <button class="icon-btn" id="refreshModelsBtn" title="Refresh model list">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <button class="icon-btn" id="refreshModelsBtn" title="Refresh model list" aria-label="Refresh model list">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
               <polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/>
             </svg>
           </button>
         </div>
-        <div class="model-info" id="modelInfo"></div>
-        <div class="server-controls">
-          <button id="startBtn" class="btn btn-primary btn-full">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+        <div class="model-info" id="modelInfo" aria-live="polite"></div>
+        <div class="server-controls" role="group" aria-label="Server controls">
+          <button id="startBtn" class="btn btn-primary btn-full" aria-label="Start the inference server">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><polygon points="5 3 19 12 5 21 5 3"/></svg>
             Start Server
           </button>
-          <button id="stopBtn" class="btn btn-danger btn-full" disabled>
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><rect x="4" y="4" width="16" height="16" rx="2"/></svg>
+          <button id="stopBtn" class="btn btn-danger btn-full" disabled aria-label="Stop the inference server">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><rect x="4" y="4" width="16" height="16" rx="2"/></svg>
             Stop Server
           </button>
         </div>
-        <div class="status-indicator" id="statusIndicator">
-          <span class="status-dot"></span>
+        <div class="status-indicator" id="statusIndicator" role="status" aria-live="polite">
+          <span class="status-dot" aria-hidden="true"></span>
           <span class="status-text">Disconnected</span>
         </div>
       </div>
 
       <div class="sidebar-section sidebar-history">
         <div class="section-label-row">
-          <label class="section-label">Conversations</label>
-          <button class="icon-btn icon-btn-sm" id="exportBtn" title="Export conversation">
-            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+          <label class="section-label" for="convSearch">Conversations</label>
+          <button class="icon-btn icon-btn-sm" id="exportBtn" title="Export conversation" aria-label="Export current conversation">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
           </button>
         </div>
-        <div class="conv-search">
-          <svg class="conv-search-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
-          <input type="text" id="convSearch" class="conv-search-input" placeholder="Search conversations...">
+        <div class="conv-search" role="search">
+          <svg class="conv-search-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+          <input type="text" id="convSearch" class="conv-search-input" placeholder="Search conversations..." aria-label="Search conversations by name or content">
         </div>
-        <div id="conversationList" class="conversation-list"></div>
+        <div id="conversationList" class="conversation-list" role="listbox" aria-label="Saved conversations"></div>
       </div>
 
       <div class="sidebar-footer">
-        <button class="icon-btn" id="settingsBtn" title="Settings">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <button class="icon-btn" id="settingsBtn" title="Settings" aria-label="Open settings dialog">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
             <circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/>
           </svg>
         </button>
-        <a href="https://github.com/uttampaliwal/llama-ui" target="_blank" class="icon-btn" title="GitHub">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
+        <a href="https://github.com/uttampaliwal/llama-ui" target="_blank" rel="noopener noreferrer" class="icon-btn" title="GitHub" aria-label="View source code on GitHub">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
             <path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/>
           </svg>
         </a>
       </div>
-      <div class="sidebar-resize-handle" id="sidebarResizeHandle"></div>
-      <div class="sidebar-overlay" id="sidebarOverlay"></div>
+      <div class="sidebar-resize-handle" id="sidebarResizeHandle" role="separator" aria-label="Resize sidebar" tabindex="0"></div>
+      <div class="sidebar-overlay" id="sidebarOverlay" aria-hidden="true"></div>
     </aside>
 
-    <main class="main">
-      <button class="sidebar-expand-btn" id="sidebarExpandBtn" title="Expand sidebar">
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+    <main class="main" role="main" aria-label="Chat interface">
+      <button class="sidebar-expand-btn" id="sidebarExpandBtn" title="Expand sidebar" aria-label="Expand sidebar">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
           <polyline points="9 18 15 12 9 6"/>
         </svg>
       </button>
-      <div class="chat-container" id="chatContainer">
+      <div class="chat-container" id="chatContainer" role="region" aria-label="Chat messages">
         <div class="chat-header">
-          <span id="chatTitle" class="chat-title"></span>
-          <button class="restart-btn hidden" id="restartBtn" title="Restart conversation">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>
+          <span id="chatTitle" class="chat-title" aria-live="polite"></span>
+          <button class="restart-btn hidden" id="restartBtn" title="Restart conversation" aria-label="Clear conversation and start over">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>
           </button>
         </div>
-        <div class="welcome-screen" id="welcomeScreen">
-          <div class="welcome-icon">
+        <div class="welcome-screen" id="welcomeScreen" role="status">
+          <div class="welcome-icon" aria-hidden="true">
             <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
               <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/>
             </svg>
@@ -129,8 +132,8 @@
           <h1>Llama.cpp UI</h1>
           <p>Select a model and start the server to begin chatting</p>
           <div class="quick-actions">
-            <button class="quick-action">
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <button class="quick-action" aria-label="Show keyboard shortcuts">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
                 <rect x="2" y="6" width="20" height="12" rx="2"/><path d="M6 10h0M10 10h0M14 10h0M18 10h0M8 14h8"/>
               </svg>
               Keyboard Shortcuts
@@ -138,38 +141,39 @@
           </div>
         </div>
 
-        <div class="messages" id="messages"></div>
-        <button class="scroll-bottom-btn" id="scrollBottomBtn" title="Scroll to bottom">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="7 13 12 18 17 13"/><polyline points="7 6 12 11 17 6"/></svg>
+        <div class="messages" id="messages" role="log" aria-label="Chat message history" aria-live="polite"></div>
+        <button class="scroll-bottom-btn" id="scrollBottomBtn" title="Scroll to bottom" aria-label="Scroll to latest message">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><polyline points="7 13 12 18 17 13"/><polyline points="7 6 12 11 17 6"/></svg>
         </button>
       </div>
 
-      <div class="input-area">
-        <div class="model-badge" id="modelBadge"></div>
+      <div class="input-area" role="region" aria-label="Message input">
+        <div class="model-badge" id="modelBadge" aria-live="polite"></div>
         <div class="input-container">
-          <button class="icon-btn attach-btn" id="attachBtn" title="Attach file">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <button class="icon-btn attach-btn" id="attachBtn" title="Attach file" aria-label="Attach files to message">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
               <path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"/>
             </svg>
           </button>
-          <input type="file" id="fileInput" multiple accept="image/*,.txt,.md,.markdown,.csv,.tsv,.json,.xml,.yaml,.yml,.log,.py,.js,.ts,.jsx,.tsx,.html,.css,.pdf,.docx,.doc,.xlsx,.xls,.zip" hidden>
+          <input type="file" id="fileInput" multiple accept="image/*,.txt,.md,.markdown,.csv,.tsv,.json,.xml,.yaml,.yml,.log,.py,.js,.ts,.jsx,.tsx,.html,.css,.pdf,.docx,.doc,.xlsx,.xls,.zip" hidden aria-label="Upload files">
           <div class="input-text-area">
-            <div class="attachment-preview" id="attachmentPreview" style="display:none">
-              <div id="attachmentList"></div>
+            <div class="attachment-preview" id="attachmentPreview" style="display:none" aria-label="Attached files">
+              <div id="attachmentList" role="list" aria-label="Pending attachments"></div>
             </div>
-            <textarea id="userInput" placeholder="Type a message... (Enter to send, Shift+Enter for new line)" rows="1"></textarea>
+            <textarea id="userInput" placeholder="Type a message... (Enter to send, Shift+Enter for new line)" rows="1" aria-label="Type your message" aria-describedby="inputHelp"></textarea>
+            <span id="inputHelp" class="sr-only">Press Enter to send, Shift+Enter for new line</span>
           </div>
           <div class="input-actions">
-            <button id="sendBtn" class="icon-btn send-btn" disabled>
-              <span class="btn-icon">➤</span>
+            <button id="sendBtn" class="icon-btn send-btn" disabled aria-label="Send message">
+              <span class="btn-icon" aria-hidden="true">➤</span>
               <span class="btn-label">Send</span>
             </button>
-            <button id="stopGenerateBtn" class="icon-btn stop-btn" style="display:none">
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><rect x="4" y="4" width="16" height="16" rx="2"/></svg>
+            <button id="stopGenerateBtn" class="icon-btn stop-btn" style="display:none" aria-label="Stop generating response">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><rect x="4" y="4" width="16" height="16" rx="2"/></svg>
             </button>
           </div>
         </div>
-        <div class="input-footer">
+        <div class="input-footer" aria-live="polite">
           <span id="tokenCount"></span>
           <span id="latency"></span>
         </div>
@@ -177,108 +181,110 @@
     </main>
   </div>
 
-  <div class="modal-overlay" id="shortcutsModal">
+  <div class="modal-overlay" id="shortcutsModal" role="dialog" aria-modal="true" aria-labelledby="shortcutsTitle">
     <div class="modal">
       <div class="modal-header">
-        <h3>Keyboard Shortcuts</h3>
-        <button class="icon-btn">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+        <h3 id="shortcutsTitle">Keyboard Shortcuts</h3>
+        <button class="icon-btn" aria-label="Close keyboard shortcuts dialog">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
         </button>
       </div>
-      <div class="modal-body">
-        <div class="shortcut-row"><kbd>Enter</kbd><span>Send message</span></div>
-        <div class="shortcut-row"><kbd>Shift+Enter</kbd><span>New line</span></div>
-        <div class="shortcut-row"><kbd>Ctrl+Shift+C</kbd><span>Clear chat</span></div>
-        <div class="shortcut-row"><kbd>Ctrl+Shift+N</kbd><span>New conversation</span></div>
-        <div class="shortcut-row"><kbd>Ctrl+Shift+S</kbd><span>Toggle sidebar</span></div>
+      <div class="modal-body" role="list">
+        <div class="shortcut-row" role="listitem"><kbd aria-label="Enter key">Enter</kbd><span>Send message</span></div>
+        <div class="shortcut-row" role="listitem"><kbd aria-label="Shift plus Enter keys">Shift+Enter</kbd><span>New line</span></div>
+        <div class="shortcut-row" role="listitem"><kbd aria-label="Control plus Shift plus C keys">Ctrl+Shift+C</kbd><span>Clear chat</span></div>
+        <div class="shortcut-row" role="listitem"><kbd aria-label="Control plus Shift plus N keys">Ctrl+Shift+N</kbd><span>New conversation</span></div>
+        <div class="shortcut-row" role="listitem"><kbd aria-label="Control plus Shift plus S keys">Ctrl+Shift+S</kbd><span>Toggle sidebar</span></div>
       </div>
     </div>
   </div>
 
-  <div class="modal-overlay" id="settingsModal">
+  <div class="modal-overlay" id="settingsModal" role="dialog" aria-modal="true" aria-labelledby="settingsTitle">
     <div class="modal modal-lg">
       <div class="modal-header">
-        <h3>Settings</h3>
-        <button class="icon-btn">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+        <h3 id="settingsTitle">Settings</h3>
+        <button class="icon-btn" aria-label="Close settings dialog">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
         </button>
       </div>
       <div class="modal-body">
-        <div class="settings-tabs">
-          <button class="settings-tab active" data-tab="params">Parameters</button>
-          <button class="settings-tab" data-tab="system">System Prompt</button>
-          <button class="settings-tab" data-tab="presets">Presets</button>
+        <div class="settings-tabs" role="tablist" aria-label="Settings categories">
+          <button class="settings-tab active" data-tab="params" role="tab" aria-selected="true" aria-controls="settingsParams">Parameters</button>
+          <button class="settings-tab" data-tab="system" role="tab" aria-selected="false" aria-controls="settingsSystem">System Prompt</button>
+          <button class="settings-tab" data-tab="presets" role="tab" aria-selected="false" aria-controls="settingsPresets">Presets</button>
         </div>
-        <div class="settings-panel active" id="settingsParams">
+        <div class="settings-panel active" id="settingsParams" role="tabpanel" aria-labelledby="paramsTab">
           <div class="param-row">
-            <label>Temperature</label>
+            <label for="temperature">Temperature</label>
             <div class="param-input">
-              <input type="range" id="temperature" min="0" max="2" step="0.1" value="0.7">
-              <span id="temperatureVal">0.7</span>
+              <input type="range" id="temperature" min="0" max="2" step="0.1" value="0.7" aria-describedby="temperatureVal">
+              <span id="temperatureVal" aria-live="polite">0.7</span>
             </div>
           </div>
           <div class="param-row">
-            <label>Top P</label>
+            <label for="topP">Top P</label>
             <div class="param-input">
-              <input type="range" id="topP" min="0" max="1" step="0.05" value="0.9">
-              <span id="topPVal">0.9</span>
+              <input type="range" id="topP" min="0" max="1" step="0.05" value="0.9" aria-describedby="topPVal">
+              <span id="topPVal" aria-live="polite">0.9</span>
             </div>
           </div>
           <div class="param-row">
-            <label>Top K</label>
+            <label for="topK">Top K</label>
             <div class="param-input">
-              <input type="range" id="topK" min="1" max="100" step="1" value="40">
-              <span id="topKVal">40</span>
+              <input type="range" id="topK" min="1" max="100" step="1" value="40" aria-describedby="topKVal">
+              <span id="topKVal" aria-live="polite">40</span>
             </div>
           </div>
           <div class="param-row">
-            <label>Max Tokens</label>
+            <label for="maxTokens">Max Tokens</label>
             <div class="param-input">
               <input type="number" id="maxTokens" min="64" max="8192" value="4096">
             </div>
           </div>
           <div class="param-row">
-            <label>Context Size</label>
+            <label for="contextSize">Context Size</label>
             <div class="param-input">
               <input type="number" id="contextSize" min="512" max="131072" step="512" value="4096">
             </div>
           </div>
           <div class="param-row">
-            <label>GPU Layers</label>
+            <label for="gpuLayers">GPU Layers</label>
             <div class="param-input">
               <input type="number" id="gpuLayers" min="0" max="200" value="99">
             </div>
           </div>
           <div class="param-row">
-            <label>Threads</label>
+            <label for="threads">Threads</label>
             <div class="param-input">
               <input type="number" id="threads" min="1" max="32" value="4">
             </div>
           </div>
           <div class="param-row">
-            <label>Repeat Penalty</label>
+            <label for="repeatPenalty">Repeat Penalty</label>
             <div class="param-input">
-              <input type="range" id="repeatPenalty" min="0" max="2" step="0.05" value="1.1">
-              <span id="repeatPenaltyVal">1.1</span>
+              <input type="range" id="repeatPenalty" min="0" max="2" step="0.05" value="1.1" aria-describedby="repeatPenaltyVal">
+              <span id="repeatPenaltyVal" aria-live="polite">1.1</span>
             </div>
           </div>
           <button id="applySettings" class="btn btn-secondary btn-full">Apply Settings</button>
         </div>
-        <div class="settings-panel" id="settingsSystem">
+        <div class="settings-panel" id="settingsSystem" role="tabpanel" aria-labelledby="systemTab">
+          <label for="systemPrompt" class="sr-only">System Prompt</label>
           <textarea id="systemPrompt" rows="6" placeholder="Enter system prompt..." style="width:100%;padding:10px;background:var(--bg-tertiary);border:1px solid var(--border);border-radius:var(--radius);color:var(--text-primary);font-size:13px;resize:vertical;font-family:inherit;">You are a helpful assistant.</textarea>
         </div>
-        <div class="settings-panel" id="settingsPresets">
+        <div class="settings-panel" id="settingsPresets" role="tabpanel" aria-labelledby="presetsTab">
           <div class="preset-section" style="border:none;padding:0;margin:0;">
             <div class="preset-row">
-              <select id="presetSelect" class="preset-select">
+              <label for="presetSelect" class="sr-only">Select preset</label>
+              <select id="presetSelect" class="preset-select" aria-label="Select a preset">
                 <option value="">Load preset...</option>
               </select>
-              <div class="preset-actions">
-                <button class="icon-btn" id="savePresetBtn" title="Save current params as preset">
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
+              <div class="preset-actions" role="group" aria-label="Preset actions">
+                <button class="icon-btn" id="savePresetBtn" title="Save current params as preset" aria-label="Save current settings as preset">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
                 </button>
-                <button class="icon-btn" id="deletePresetBtn" title="Delete selected preset">
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+                <button class="icon-btn" id="deletePresetBtn" title="Delete selected preset" aria-label="Delete selected preset">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
                 </button>
               </div>
             </div>
@@ -288,36 +294,36 @@
     </div>
   </div>
 
-  <div class="modal-overlay" id="exportModal">
+  <div class="modal-overlay" id="exportModal" role="dialog" aria-modal="true" aria-labelledby="exportTitle">
     <div class="modal">
       <div class="modal-header">
-        <h3>Export Conversation</h3>
-        <button class="icon-btn" id="exportCloseBtn">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+        <h3 id="exportTitle">Export Conversation</h3>
+        <button class="icon-btn" id="exportCloseBtn" aria-label="Close export dialog">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
         </button>
       </div>
       <div class="modal-body">
-        <div class="export-options">
-          <div class="export-option" data-format="markdown">
+        <div class="export-options" role="group" aria-label="Export format options">
+          <button class="export-option" data-format="markdown" aria-label="Export as Markdown">
             <span class="export-label">
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
               Markdown
             </span>
             <span class="export-hint">Readable text format</span>
-          </div>
-          <div class="export-option" data-format="json">
+          </button>
+          <button class="export-option" data-format="json" aria-label="Export as JSON">
             <span class="export-label">
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg>
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg>
               JSON
             </span>
             <span class="export-hint">Machine-readable format</span>
-          </div>
+          </button>
         </div>
       </div>
     </div>
   </div>
 
-  <div class="toast-container" id="toastContainer"></div>
+  <div class="toast-container" id="toastContainer" aria-live="polite" aria-atomic="false"></div>
 
   <script>
     window.MathJax = {

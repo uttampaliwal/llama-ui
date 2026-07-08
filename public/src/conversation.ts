@@ -145,6 +145,8 @@ function buildMessageNode(msg: ChatMessage, streaming: boolean): HTMLElement {
   const div = document.createElement('div');
   div.className = `message ${msg.role}`;
   div.dataset.messageId = msg.id;
+  div.setAttribute('role', 'article');
+  div.setAttribute('aria-label', `${msg.role === 'user' ? 'Your message' : 'Assistant response'}`);
   const thinking = msg.thinking || '';
 
   if (msg.role === 'user') {
@@ -154,21 +156,23 @@ function buildMessageNode(msg: ChatMessage, streaming: boolean): HTMLElement {
     div.appendChild(contentDiv);
     const actions = document.createElement('div');
     actions.className = 'message-actions';
-    actions.innerHTML = '<span class="edit-message-btn" title="Edit">✏️</span><span class="delete-message-btn" title="Delete">🗑️</span>';
+    actions.setAttribute('role', 'group');
+    actions.setAttribute('aria-label', 'Message actions');
+    actions.innerHTML = '<span class="edit-message-btn" title="Edit" role="button" tabindex="0" aria-label="Edit message">✏️</span><span class="delete-message-btn" title="Delete" role="button" tabindex="0" aria-label="Delete message">🗑️</span>';
     div.appendChild(actions);
     requestAnimationFrame(() => renderMath(contentDiv));
     return div;
   }
 
   if (streaming && !msg.content) {
-    div.innerHTML = `<div class="message-content"><div class="thinking-container" style="display:none"><details class="thinking-block"><summary>Thinking...</summary><div class="thinking-content"></div></details></div><div class="response-container"></div></div><div class="message-actions"><span class="copy-message-btn" title="Copy">📋</span><span class="regenerate-btn" title="Regenerate">🔄</span><span class="delete-message-btn" title="Delete">🗑️</span></div>`;
+    div.innerHTML = `<div class="message-content"><div class="thinking-container" style="display:none"><details class="thinking-block"><summary>Thinking...</summary><div class="thinking-content"></div></details></div><div class="response-container" aria-live="polite"></div></div><div class="message-actions" role="group" aria-label="Message actions"><span class="copy-message-btn" title="Copy" role="button" tabindex="0" aria-label="Copy message">📋</span><span class="regenerate-btn" title="Regenerate" role="button" tabindex="0" aria-label="Regenerate response">🔄</span><span class="delete-message-btn" title="Delete" role="button" tabindex="0" aria-label="Delete message">🗑️</span></div>`;
     return div;
   }
 
   const { thinking: t, content: c } = extractThinking(msg.content as string);
   const th = t || thinking;
   const text = c || (msg.content as string);
-  div.innerHTML = `<div class="message-content"></div><div class="message-actions"><span class="copy-message-btn" title="Copy">📋</span><span class="regenerate-btn" title="Regenerate">🔄</span><span class="delete-message-btn" title="Delete">🗑️</span></div>`;
+  div.innerHTML = `<div class="message-content"></div><div class="message-actions" role="group" aria-label="Message actions"><span class="copy-message-btn" title="Copy" role="button" tabindex="0" aria-label="Copy message">📋</span><span class="regenerate-btn" title="Regenerate" role="button" tabindex="0" aria-label="Regenerate response">🔄</span><span class="delete-message-btn" title="Delete" role="button" tabindex="0" aria-label="Delete message">🗑️</span></div>`;
   const contentDiv = div.querySelector('.message-content') as HTMLElement;
   fillContent(contentDiv, th, text, msg.createdAt, msg.id);
   return div;
