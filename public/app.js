@@ -1,9 +1,11 @@
 let conversations = JSON.parse(localStorage.getItem('conversations') || '{}');
+Object.values(conversations).forEach(c => { if (c.titleEdited === undefined) c.titleEdited = false; });
 let currentConversationId = null;
 let isGenerating = false;
 let startTime = null;
 let abortController = null;
 let modelMap = {};
+let streamTokenCount = 0;
 
 const $ = (id) => document.getElementById(id);
 const el = {
@@ -31,6 +33,7 @@ async function init() {
   await checkStatus();
   setupListeners();
   renderConversations();
+  renderPresets();
   setInterval(checkStatus, 3000);
 }
 
@@ -127,6 +130,38 @@ function setupListeners() {
   $('settingsBtn').addEventListener('click', showShortcuts);
   $('menuBtn').addEventListener('click', () => el.sidebar.classList.toggle('open'));
 
+  $('refreshModelsBtn').addEventListener('click', async () => {
+    $('refreshModelsBtn').classList.add('loading');
+    await loadModels();
+    $('refreshModelsBtn').classList.remove('loading');
+    showToast('Model list refreshed', 'success');
+  });
+
+  $('savePresetBtn').addEventListener('click', savePreset);
+  $('deletePresetBtn').addEventListener('click', deletePreset);
+  $('presetSelect').addEventListener('change', (e) => {
+    if (e.target.value) applyPreset(e.target.value);
+    e.target.value = '';
+  });
+
+  $('exportBtn').addEventListener('click', showExportModal);
+
+  el.convSearch = $('convSearch');
+  if (el.convSearch) {
+    el.convSearch.addEventListener('input', () => renderConversations());
+  }
+
+  el.chatContainer.addEventListener('scroll', () => {
+    const btn = $('scrollBottomBtn');
+    const threshold = 400;
+    const atBottom = el.chatContainer.scrollHeight - el.chatContainer.scrollTop - el.chatContainer.clientHeight < threshold;
+    btn.classList.toggle('visible', !atBottom);
+  });
+
+  $('scrollBottomBtn').addEventListener('click', () => {
+    el.chatContainer.scrollTo({ top: el.chatContainer.scrollHeight, behavior: 'smooth' });
+  });
+
   document.querySelectorAll('.modal-overlay').forEach(m => {
     m.addEventListener('click', (e) => { if (e.target === m) m.classList.remove('active'); });
   });
@@ -146,7 +181,10 @@ function setupListeners() {
 
   document.addEventListener('keydown', (e) => {
     if (e.key === 'Escape') {
-      document.querySelectorAll('.modal-overlay.active').forEach(m => m.classList.remove('active'));
+      document.querySelectorAll('.modal-overlay.active').forEach(m => {
+        if (m.id === 'shortcutsModal') m.classList.remove('active');
+        else m.remove();
+      });
     }
     if (e.ctrlKey && e.shiftKey) {
       if (e.key === 'C') { e.preventDefault(); clearCurrentChat(); }
@@ -243,6 +281,7 @@ async function sendMessage() {
   let streamingText = '';
   let extractedThinking = '';
   let lastUsage = null;
+  streamTokenCount = 0;
 
   updateLatency();
 
@@ -280,9 +319,11 @@ async function sendMessage() {
            try {
              const parsed = JSON.parse(trimmed.slice(6));
              if (parsed.usage) lastUsage = parsed.usage;
-             const token = parsed.choices?.[0]?.delta?.content;
-             if (token) {
-              streamingText += token;
+              const token = parsed.choices?.[0]?.delta?.content;
+              if (token) {
+               streamTokenCount++;
+               el.tokenCount.textContent = `${streamTokenCount} tok · ${((Date.now() - startTime) / 1000).toFixed(1)}s`;
+               streamingText += token;
               const extracted = extractThinking(streamingText);
               extractedThinking = extracted.thinking;
 
@@ -319,7 +360,31 @@ async function sendMessage() {
   const answer = finalContent || displayThinking;
   contentDiv.innerHTML = buildMessageHtml(displayThinking, finalContent);
   renderMath(contentDiv);
-  if (answer) addCopyButton(assistantDiv, answer);
+  highlightCodeBlocks();
+
+  const existingToolbar = assistantDiv.querySelector('.message-toolbar');
+  if (!existingToolbar) {
+    const toolbar = document.createElement('div');
+    toolbar.className = 'message-toolbar';
+    toolbar.innerHTML = `
+      <button class="icon-btn" title="Copy" data-action="copy"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg></button>
+      <button class="icon-btn" title="Regenerate" data-action="regenerate"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg></button>
+      <button class="icon-btn danger" title="Delete" data-action="delete"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg></button>`;
+    assistantDiv.querySelector('.message-content').appendChild(toolbar);
+    toolbar.addEventListener('click', (e) => {
+      const btn = e.target.closest('[data-action]');
+      if (!btn) return;
+      const action = btn.dataset.action;
+      const msgIndex = Array.from(el.messages.children).indexOf(assistantDiv);
+      if (action === 'copy') {
+        copyTextToClipboard(answer || streamingText);
+      } else if (action === 'delete') {
+        if (msgIndex >= 0) deleteMessageAt(msgIndex);
+      } else if (action === 'regenerate') {
+        if (msgIndex >= 0) regenerateFrom(msgIndex);
+      }
+    });
+  }
 
   isGenerating = false;
   el.sendBtn.style.display = 'flex';
@@ -358,13 +423,36 @@ function appendMessage(role, content, streaming = false) {
       copyText = content;
     }
   }
+  const toolbarHtml = !streaming ? `<div class="message-toolbar">
+    <button class="icon-btn" title="Copy" data-action="copy"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg></button>
+    ${role === 'assistant' ? `<button class="icon-btn" title="Regenerate" data-action="regenerate"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg></button>` : ''}
+    <button class="icon-btn danger" title="Delete" data-action="delete"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg></button>
+  </div>` : '';
   div.innerHTML = `
     <div class="message-avatar">${avatar}</div>
-    <div class="message-content">${inner}${streaming ? '<span class="cursor"></span>' : ''}</div>`;
+    <div class="message-content">${inner}${streaming ? '<span class="cursor"></span>' : ''}${toolbarHtml}</div>`;
   el.messages.appendChild(div);
   if (!streaming && inner) renderMath(div);
-  if (!streaming && copyText) addCopyButton(div, copyText);
+  if (!streaming && inner) highlightCodeBlocks();
   el.chatContainer.scrollTop = el.chatContainer.scrollHeight;
+  if (!streaming) {
+    const toolbar = div.querySelector('.message-toolbar');
+    if (toolbar) {
+      toolbar.addEventListener('click', (e) => {
+        const btn = e.target.closest('[data-action]');
+        if (!btn) return;
+        const action = btn.dataset.action;
+        const msgIndex = Array.from(el.messages.children).indexOf(div);
+        if (action === 'copy') {
+          copyTextToClipboard(copyText);
+        } else if (action === 'delete') {
+          if (msgIndex >= 0) deleteMessageAt(msgIndex);
+        } else if (action === 'regenerate') {
+          if (msgIndex >= 0) regenerateFrom(msgIndex);
+        }
+      });
+    }
+  }
   return div;
 }
 
@@ -502,6 +590,8 @@ function formatMd(text) {
       const trimmed = line.trim();
       if (trimmed === '') {
         result += '<br>';
+      } else if (/^---+\s*$/.test(trimmed)) {
+        result += '<hr>';
       } else if (trimmed.startsWith('<pre>') || trimmed.startsWith('<ul>') || trimmed.startsWith('<ol>')) {
         result += trimmed;
       } else {
@@ -557,6 +647,14 @@ function renderMath(element) {
   }
 }
 
+function highlightCodeBlocks() {
+  if (typeof hljs !== 'undefined') {
+    document.querySelectorAll('.message-content pre code').forEach(el => {
+      try { hljs.highlightElement(el); } catch (e) {}
+    });
+  }
+}
+
 function copyTextToClipboard(text) {
   const finish = (ok) => showToast(ok ? 'Copied to clipboard' : 'Copy failed', ok ? 'success' : 'error');
   if (navigator.clipboard && window.isSecureContext) {
@@ -603,7 +701,7 @@ function closeModal(id) { const m = $(id); if (m) m.classList.remove('active'); 
 
 function newConversation() {
   const id = Date.now().toString();
-  conversations[id] = { id, title: 'New Chat', messages: [], createdAt: Date.now(), updatedAt: Date.now() };
+  conversations[id] = { id, title: 'New Chat', messages: [], createdAt: Date.now(), updatedAt: Date.now(), titleEdited: false };
   currentConversationId = id;
   saveConversations();
   renderConversations();
@@ -635,24 +733,102 @@ function deleteConversation(id) {
   renderConversations();
 }
 
+function deleteMessageAt(index) {
+  if (!currentConversationId || !conversations[currentConversationId]) return;
+  const conv = conversations[currentConversationId];
+  if (index < 0 || index >= conv.messages.length) return;
+  conv.messages.splice(index, 1);
+  conv.updatedAt = Date.now();
+  saveConversations();
+  renderConversations();
+  el.messages.children[index]?.remove();
+  if (!conv.messages.length) showWelcome();
+}
+
+function regenerateFrom(index) {
+  if (!currentConversationId || !conversations[currentConversationId] || isGenerating) return;
+  const conv = conversations[currentConversationId];
+  if (index < 0 || index >= conv.messages.length) return;
+  if (conv.messages[index].role !== 'assistant') return;
+
+  conv.messages.splice(index);
+  conv.updatedAt = Date.now();
+  saveConversations();
+  renderConversations();
+
+  while (el.messages.children.length > index) el.messages.lastChild?.remove();
+
+  const lastUserMsg = [...conv.messages].reverse().find(m => m.role === 'user');
+  if (lastUserMsg) {
+    el.userInput.value = lastUserMsg.content;
+    el.userInput.style.height = 'auto';
+    el.userInput.style.height = Math.min(el.userInput.scrollHeight, 200) + 'px';
+    sendMessage();
+  }
+}
+
 function renderConversations() {
+  const query = el.convSearch ? el.convSearch.value.toLowerCase() : '';
   const sorted = Object.values(conversations).sort((a, b) => b.updatedAt - a.updatedAt);
-  el.conversationList.innerHTML = sorted.map(c => `
-    <div class="conversation-item ${c.id === currentConversationId ? 'active' : ''}" onclick="loadConversation('${c.id}')">
-      <span class="title">${esc(c.title)}</span>
-      <button class="icon-btn delete-btn" onclick="event.stopPropagation(); deleteConversation('${c.id}')">
+  const filtered = query ? sorted.filter(c => c.title.toLowerCase().includes(query)) : sorted;
+  el.conversationList.innerHTML = filtered.map(c => `
+    <div class="conversation-item ${c.id === currentConversationId ? 'active' : ''}" data-conv-id="${c.id}">
+      <span class="title" data-editable>${esc(c.title)}</span>
+      <button class="icon-btn delete-btn" data-action="delete-conv">
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
           <polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>
         </svg>
       </button>
     </div>`).join('');
+
+  el.conversationList.querySelectorAll('.conversation-item').forEach(item => {
+    const convId = item.dataset.convId;
+    const titleEl = item.querySelector('[data-editable]');
+
+    item.addEventListener('click', (e) => {
+      if (e.target.closest('[data-action="delete-conv"]')) return;
+      loadConversation(convId);
+    });
+
+    item.querySelector('[data-action="delete-conv"]').addEventListener('click', (e) => {
+      e.stopPropagation();
+      deleteConversation(convId);
+    });
+
+    titleEl.addEventListener('dblclick', (e) => {
+      e.stopPropagation();
+      const input = document.createElement('input');
+      input.type = 'text';
+      input.className = 'title-input';
+      input.value = conversations[convId].title;
+      titleEl.replaceWith(input);
+      input.focus();
+      input.select();
+
+      const finish = () => {
+        const val = input.value.trim() || 'Untitled';
+        conversations[convId].title = val;
+        conversations[convId].titleEdited = true;
+        saveConversations();
+        renderConversations();
+      };
+
+      input.addEventListener('blur', finish);
+      input.addEventListener('keydown', (ev) => {
+        if (ev.key === 'Enter') { ev.preventDefault(); input.blur(); }
+        if (ev.key === 'Escape') { ev.preventDefault(); input.value = conversations[convId].title; input.blur(); }
+      });
+    });
+  });
 }
 
 function saveConversations() {
   if (currentConversationId && conversations[currentConversationId]) {
     const c = conversations[currentConversationId];
-    const first = c.messages.find(m => m.role === 'user');
-    if (first) c.title = first.content.substring(0, 40) + (first.content.length > 40 ? '...' : '');
+    if (!c.titleEdited) {
+      const first = c.messages.find(m => m.role === 'user');
+      if (first) c.title = first.content.substring(0, 40) + (first.content.length > 40 ? '...' : '');
+    }
   }
   localStorage.setItem('conversations', JSON.stringify(conversations));
 }
@@ -710,6 +886,146 @@ function showToast(msg, type = 'info') {
   t.textContent = msg;
   el.toastContainer.appendChild(t);
   setTimeout(() => { t.style.opacity = '0'; setTimeout(() => t.remove(), 200); }, 4000);
+}
+
+/* Parameter presets */
+function renderPresets() {
+  const presets = JSON.parse(localStorage.getItem('presets') || '{}');
+  const sel = $('presetSelect');
+  sel.innerHTML = '<option value="">Load preset...</option>';
+  Object.keys(presets).forEach(name => {
+    const o = document.createElement('option');
+    o.value = name;
+    o.textContent = name;
+    sel.appendChild(o);
+  });
+}
+
+function applyPreset(name) {
+  const presets = JSON.parse(localStorage.getItem('presets') || '{}');
+  const p = presets[name];
+  if (!p) return;
+  $('temperature').value = p.temperature;
+  $('temperatureVal').textContent = p.temperature;
+  $('topP').value = p.topP;
+  $('topPVal').textContent = p.topP;
+  $('topK').value = p.topK;
+  $('topKVal').textContent = p.topK;
+  $('maxTokens').value = p.maxTokens;
+  $('contextSize').value = p.contextSize;
+  $('gpuLayers').value = p.gpuLayers;
+  $('threads').value = p.threads;
+  $('repeatPenalty').value = p.repeatPenalty;
+  $('repeatPenaltyVal').textContent = p.repeatPenalty;
+  el.systemPrompt.value = p.systemPrompt || '';
+  showToast('Preset "' + name + '" applied', 'success');
+}
+
+function savePreset() {
+  const name = prompt('Preset name:');
+  if (!name) return;
+  const presets = JSON.parse(localStorage.getItem('presets') || '{}');
+  presets[name] = {
+    temperature: $('temperature').value,
+    topP: $('topP').value,
+    topK: $('topK').value,
+    maxTokens: $('maxTokens').value,
+    contextSize: $('contextSize').value,
+    gpuLayers: $('gpuLayers').value,
+    threads: $('threads').value,
+    repeatPenalty: $('repeatPenalty').value,
+    systemPrompt: el.systemPrompt.value
+  };
+  localStorage.setItem('presets', JSON.stringify(presets));
+  renderPresets();
+  showToast('Preset "' + name + '" saved', 'success');
+}
+
+function deletePreset() {
+  const sel = $('presetSelect');
+  const name = sel.value;
+  if (!name) return;
+  if (!confirm('Delete preset "' + name + '"?')) return;
+  const presets = JSON.parse(localStorage.getItem('presets') || '{}');
+  delete presets[name];
+  localStorage.setItem('presets', JSON.stringify(presets));
+  renderPresets();
+  showToast('Preset "' + name + '" deleted');
+}
+
+/* Export */
+function exportConversation(format) {
+  if (!currentConversationId || !conversations[currentConversationId]) {
+    return showToast('No conversation to export', 'error');
+  }
+  const conv = conversations[currentConversationId];
+  const filename = (conv.title || 'conversation').replace(/[^a-z0-9]/gi, '_').toLowerCase();
+
+  if (format === 'json') {
+    const data = JSON.stringify(conv, null, 2);
+    downloadFile(data, filename + '.json', 'application/json');
+  } else {
+    let md = '# ' + conv.title + '\n\n';
+    conv.messages.forEach(m => {
+      const role = m.role === 'user' ? '**You**' : '**Assistant**';
+      md += role + ' (' + new Date(m.timestamp).toLocaleString() + '):\n\n';
+      const { thinking, content } = extractThinking(m.content);
+      if (thinking) md += '> *Thinking:* ' + thinking + '\n\n';
+      md += content + '\n\n---\n\n';
+    });
+    downloadFile(md, filename + '.md', 'text/markdown');
+  }
+  const exportOverlay = document.getElementById('exportModal');
+  if (exportOverlay) exportOverlay.remove();
+  showToast('Exported as ' + format.toUpperCase(), 'success');
+}
+
+function downloadFile(content, filename, mime) {
+  const blob = new Blob([content], { type: mime });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = filename;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+}
+
+function showExportModal() {
+  const overlay = document.createElement('div');
+  overlay.className = 'modal-overlay active';
+  overlay.id = 'exportModal';
+  overlay.innerHTML = `
+    <div class="modal">
+      <div class="modal-header">
+        <h3>Export Conversation</h3>
+        <button class="icon-btn" id="exportCloseBtn">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+        </button>
+      </div>
+      <div class="modal-body">
+        <div class="export-options">
+          <div class="export-option" onclick="exportConversation('markdown')">
+            <span class="export-label">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
+              Markdown
+            </span>
+            <span class="export-hint">Readable text format</span>
+          </div>
+          <div class="export-option" onclick="exportConversation('json')">
+            <span class="export-label">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg>
+              JSON
+            </span>
+            <span class="export-hint">Machine-readable format</span>
+          </div>
+        </div>
+      </div>
+    </div>`;
+  overlay.addEventListener('click', (e) => { if (e.target === overlay) overlay.remove(); });
+  overlay.querySelector('#exportCloseBtn').addEventListener('click', () => overlay.remove());
+  document.body.appendChild(overlay);
 }
 
 document.addEventListener('DOMContentLoaded', init);
