@@ -4,13 +4,15 @@ export function renderMath(element: Element): void {
   }
 }
 
-export function highlightCodeBlocks(): void {
+export function highlightCodeBlocks(root?: Element | Document): void {
   const hl = hljs;
   if (typeof hl !== 'undefined') {
-    document.querySelectorAll('.message-content pre code').forEach((node) => {
-      try {
-        hl.highlightElement(node);
-      } catch (e) {}
-    });
+    (root ?? document)
+      .querySelectorAll('pre code')
+      .forEach((node) => {
+        try {
+          hl.highlightElement(node);
+        } catch (e) {}
+      });
   }
 }

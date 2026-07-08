@@ -105,7 +105,6 @@ export function hideWelcome(): void {
 
 export function showWelcome(): void {
   el.welcomeScreen.style.display = 'flex';
-  el.chatMessages.innerHTML = '';
   if (el.chatTitle) el.chatTitle.closest('.chat-header')?.classList.remove('visible');
 }
 

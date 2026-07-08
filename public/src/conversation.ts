@@ -71,6 +71,173 @@ export function getConversations(): Conversation[] {
   return Array.isArray(conversations) ? conversations : [];
 }
 
+// ---------------------------------------------------------------------------
+// Virtual (windowed) chat rendering
+//
+// Only the messages near the current scroll position are kept in the DOM. The
+// space they would occupy above/below the viewport is represented by spacer
+// divs sized from cached (or estimated) message heights, so long conversations
+// stay cheap to scroll. Messages already mounted are reused by id so in-flight
+// state (e.g. streaming) is preserved.
+// ---------------------------------------------------------------------------
+const OVERSCAN = 800; // px rendered beyond the viewport on each side
+const heights = new Map<string, number>();
+const nodeForId = new Map<string, HTMLElement>();
+let lastStart = -1;
+let lastEnd = -1;
+let rafPending = 0;
+let virtualReady = false;
+
+function textLength(content: ChatMessage['content']): number {
+  if (typeof content === 'string') return content.length;
+  return content.reduce((n, p) => n + (p.type === 'text' ? p.text.length : 600), 0);
+}
+
+function estimateHeight(msg: ChatMessage): number {
+  if (msg.role === 'assistant' && !msg.content) return 120;
+  const len = textLength(msg.content);
+  return Math.max(80, Math.min(1400, len / 1.6 + 80));
+}
+
+function heightFor(msg: ChatMessage): number {
+  const h = heights.get(msg.id);
+  return h && h > 0 ? h : estimateHeight(msg);
+}
+
+function convMessages(): ChatMessage[] {
+  const conv = getCurrentConv();
+  return conv ? conv.messages : [];
+}
+
+function buildMessageNode(msg: ChatMessage, streaming: boolean): HTMLElement {
+  const div = document.createElement('div');
+  div.className = `message ${msg.role}`;
+  div.dataset.messageId = msg.id;
+  const thinking = msg.thinking || '';
+
+  if (msg.role === 'user') {
+    div.innerHTML = `<div class="message-content">${msg.content}</div><div class="message-actions"><span class="edit-message-btn" title="Edit">✏️</span><span class="delete-message-btn" title="Delete">🗑️</span></div>`;
+  } else if (streaming && !msg.content) {
+    div.innerHTML = `<div class="message-content"><div class="thinking-container" style="display:none"><details class="thinking-block"><summary>Thinking...</summary><div class="thinking-content"></div></details></div><div class="response-container"></div></div><div class="message-actions"><span class="copy-message-btn" title="Copy">📋</span><span class="regenerate-btn" title="Regenerate">🔄</span><span class="delete-message-btn" title="Delete">🗑️</span></div>`;
+  } else {
+    const { thinking: t, content: c } = extractThinking(msg.content as string);
+    const th = t || thinking;
+    div.innerHTML = `<div class="message-content">${buildMessageHtml(th, c || (msg.content as string), msg.createdAt)}</div><div class="message-actions"><span class="copy-message-btn" title="Copy">📋</span><span class="regenerate-btn" title="Regenerate">🔄</span><span class="delete-message-btn" title="Delete">🗑️</span></div>`;
+  }
+  requestAnimationFrame(() => {
+    const contentDiv = div.querySelector('.message-content');
+    if (contentDiv) {
+      renderMath(contentDiv);
+      highlightCodeBlocks(div);
+    }
+  });
+  return div;
+}
+
+function measureMounted(): void {
+  for (const [id, node] of nodeForId) {
+    const h = node.offsetHeight;
+    if (h > 0) heights.set(id, h);
+  }
+}
+
+function mountWindow(): void {
+  try {
+    const msgs = convMessages();
+    const n = msgs.length;
+    if (n === 0) {
+      if (el.chatMessages.childElementCount > 0) el.chatMessages.innerHTML = '';
+      nodeForId.clear();
+      lastStart = lastEnd = -1;
+      return;
+    }
+    const clientH = el.chatMessages.clientHeight || 600;
+    const scrollTop = el.chatMessages.scrollTop;
+    const offsets = new Array<number>(n);
+    let offset = 0;
+    for (let i = 0; i < n; i++) {
+      offsets[i] = offset;
+      offset += heightFor(msgs[i]);
+    }
+    const total = offset;
+    const viewBottom = scrollTop + clientH;
+    let start = 0;
+    while (start < n - 1 && offsets[start + 1] < scrollTop - OVERSCAN) start++;
+    let end = start;
+    while (end < n - 1 && offsets[end + 1] < viewBottom + OVERSCAN) end++;
+
+    if (start === lastStart && end === lastEnd) return;
+    lastStart = start;
+    lastEnd = end;
+
+    const inWindow = new Set<string>();
+    for (let i = start; i <= end; i++) inWindow.add(msgs[i].id);
+    for (const [id, node] of nodeForId) {
+      if (!inWindow.has(id)) {
+        node.remove();
+        nodeForId.delete(id);
+      }
+    }
+
+    el.chatMessages.innerHTML = '';
+    const top = document.createElement('div');
+    top.className = 'vspacer';
+    top.style.height = offsets[start] + 'px';
+    el.chatMessages.appendChild(top);
+    for (let i = start; i <= end; i++) {
+      const msg = msgs[i];
+      let node = nodeForId.get(msg.id);
+      if (!node) {
+        node = buildMessageNode(msg, false);
+        nodeForId.set(msg.id, node);
+      }
+      el.chatMessages.appendChild(node);
+    }
+    const bottom = document.createElement('div');
+    bottom.className = 'vspacer';
+    bottom.style.height = Math.max(0, total - offsets[end + 1]) + 'px';
+    el.chatMessages.appendChild(bottom);
+
+    requestAnimationFrame(measureMounted);
+  } catch (e) {
+    console.warn('Virtual scroll failed, falling back to full render:', e);
+    fallbackRenderAll();
+  }
+}
+
+function fallbackRenderAll(): void {
+  const msgs = convMessages();
+  el.chatMessages.innerHTML = '';
+  nodeForId.clear();
+  for (const msg of msgs) {
+    const node = buildMessageNode(msg, false);
+    nodeForId.set(msg.id, node);
+    el.chatMessages.appendChild(node);
+  }
+  lastStart = lastEnd = -1;
+}
+
+function scheduleWindowUpdate(): void {
+  if (rafPending) return;
+  rafPending = requestAnimationFrame(() => {
+    rafPending = 0;
+    mountWindow();
+  });
+}
+
+export function setupVirtualScroll(): void {
+  if (virtualReady) return;
+  virtualReady = true;
+  el.chatMessages.addEventListener('scroll', scheduleWindowUpdate, { passive: true });
+  window.addEventListener('resize', scheduleWindowUpdate);
+}
+
+export function clearChatView(): void {
+  nodeForId.clear();
+  el.chatMessages.innerHTML = '';
+  lastStart = lastEnd = -1;
+}
+
 export function newConversation(): Conversation {
   const conv: Conversation = {
     id: Date.now().toString(),
@@ -82,7 +249,7 @@ export function newConversation(): Conversation {
   conversations.unshift(conv);
   currentConversationId = conv.id;
   saveConversations();
-  el.chatMessages.innerHTML = '';
+  clearChatView();
   el.chatTitle.textContent = 'New Conversation';
   el.sendBtn.classList.remove('regenerate-mode');
   el.sendBtn.querySelector('.btn-icon')!.textContent = '➤';
@@ -105,36 +272,29 @@ export function selectConversation(id: string): void {
 }
 
 export function renderConversation(conv: Conversation): void {
-  el.chatMessages.innerHTML = '';
   el.chatTitle.textContent = conv.title;
-  conv.messages.forEach((msg) => renderMessage(msg, false));
+  clearChatView();
+  mountWindow();
   el.chatMessages.scrollTop = el.chatMessages.scrollHeight;
+  mountWindow();
 }
 
 export function renderMessage(msg: ChatMessage, scroll = true, streaming = false): void {
-  const div = document.createElement('div');
-  div.className = `message ${msg.role}`;
-  div.dataset.messageId = msg.id;
-  const thinking = msg.thinking || '';
-
-  if (msg.role === 'user') {
-    div.innerHTML = `<div class="message-content">${msg.content}</div><div class="message-actions"><span class="edit-message-btn" title="Edit">✏️</span><span class="delete-message-btn" title="Delete">🗑️</span></div>`;
-  } else if (streaming && !msg.content) {
-    div.innerHTML = `<div class="message-content"><div class="thinking-container" style="display:none"><details class="thinking-block"><summary>Thinking...</summary><div class="thinking-content"></div></details></div><div class="response-container"></div></div><div class="message-actions"><span class="copy-message-btn" title="Copy">📋</span><span class="regenerate-btn" title="Regenerate">🔄</span><span class="delete-message-btn" title="Delete">🗑️</span></div>`;
-  } else {
-    const { thinking: t, content: c } = extractThinking(msg.content as string);
-    const th = t || thinking;
-    div.innerHTML = `<div class="message-content">${buildMessageHtml(th, c || (msg.content as string), msg.createdAt)}</div><div class="message-actions"><span class="copy-message-btn" title="Copy">📋</span><span class="regenerate-btn" title="Regenerate">🔄</span><span class="delete-message-btn" title="Delete">🗑️</span></div>`;
+  let node = nodeForId.get(msg.id);
+  if (!node) {
+    node = buildMessageNode(msg, streaming);
+    nodeForId.set(msg.id, node);
+  } else if (streaming) {
+    const fresh = buildMessageNode(msg, true);
+    node.replaceWith(fresh);
+    nodeForId.set(msg.id, fresh);
+    node = fresh;
   }
-  el.chatMessages.appendChild(div);
-  requestAnimationFrame(() => {
-    const contentDiv = div.querySelector('.message-content');
-    if (contentDiv) {
-      renderMath(contentDiv);
-      highlightCodeBlocks();
-    }
-  });
-  if (scroll) el.chatMessages.scrollTop = el.chatMessages.scrollHeight;
+  mountWindow();
+  if (scroll) {
+    el.chatMessages.scrollTop = el.chatMessages.scrollHeight;
+    mountWindow();
+  }
 }
 
 export function updateStreamingContent(
@@ -172,8 +332,9 @@ export function updateMessageContent(msgId: string, content: string): void {
     const th = t || thinking;
     contentDiv.innerHTML = buildMessageHtml(th, c || content, msg?.createdAt);
     renderMath(contentDiv);
-    highlightCodeBlocks();
+    highlightCodeBlocks(msgEl);
   }
+  scheduleWindowUpdate();
 }
 
 export function generateTitle(conv: Conversation): string {
@@ -202,7 +363,7 @@ export function deleteConversation(id: string): void {
   if (currentConversationId === id) {
     currentConversationId = null;
     localStorage.removeItem('currentConversationId');
-    el.chatMessages.innerHTML = '';
+    clearChatView();
     showWelcome();
     el.restartBtn.classList.add('hidden');
   }

@@ -20,6 +20,7 @@ import {
   newConversation,
   selectConversation,
   loadConversations,
+  setupVirtualScroll,
 } from './conversation.js';
 import { checkStatus, startServer, stopServer } from './server.js';
 import { renderSidebar, setupSidebarListeners } from './sidebar.js';
@@ -27,6 +28,7 @@ import { textOf, type ExportFormat } from './types.js';
 
 async function init(): Promise<void> {
   await loadConversations().catch(() => {});
+  setupVirtualScroll();
 
   try {
     const savedConvId = localStorage.getItem('currentConversationId');

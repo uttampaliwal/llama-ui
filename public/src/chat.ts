@@ -13,6 +13,7 @@ import {
   updateMessageContent,
   updateStreamingContent,
   generateTitle,
+  clearChatView,
 } from './conversation.js';
 import type { ChatMessage, ChatChunk, ChatCompletionResponse, StatusResponse, PayloadMessage } from './types.js';
 
@@ -362,6 +363,7 @@ export function restartConversation(): void {
     currentAbortController = null;
   }
   saveConversations();
+  clearChatView();
   showWelcome();
   resetRegenerateMode();
 }

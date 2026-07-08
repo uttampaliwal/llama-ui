@@ -9,6 +9,12 @@
   padding: 20px 0;
 }
 
+/* Virtual-scroll spacer that reserves space for off-screen messages */
+.vspacer {
+  flex: 0 0 auto;
+  width: 100%;
+}
+
 .message {
   display: flex;
   padding: 16px 24px;
