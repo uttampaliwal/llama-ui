@@ -192,8 +192,8 @@ body {
 
 /* Parameters */
 .params-content, .system-content {
-  transition: max-height var(--transition), opacity var(--transition);
   overflow: hidden;
+  transition: max-height 0.25s ease-in-out, opacity 0.2s ease-in-out, margin-top 0.25s ease-in-out;
 }
 
 .params-content.collapsed, .system-content.collapsed {

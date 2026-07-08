@@ -29,6 +29,11 @@ async function api(path, opts) {
 }
 
 async function init() {
+  const savedWidth = localStorage.getItem('sidebarWidth');
+  if (savedWidth && el.sidebar) {
+    el.sidebar.style.width = savedWidth + 'px';
+    el.sidebar.style.minWidth = savedWidth + 'px';
+  }
   await loadModels();
   await loadSettings();
   await checkStatus();
@@ -113,6 +118,9 @@ async function checkStatus() {
     const txt = el.statusIndicator.querySelector('.status-text');
     if (dot) dot.className = 'status-dot';
     if (txt) txt.textContent = 'Error';
+    el.startBtn.disabled = false;
+    el.stopBtn.disabled = true;
+    el.sendBtn.disabled = true;
   }
 }
 
@@ -258,13 +266,6 @@ function setupListeners() {
     document.body.style.cursor = '';
     document.body.style.userSelect = '';
   });
-
-  /* Restore sidebar width */
-  const savedWidth = localStorage.getItem('sidebarWidth');
-  if (savedWidth) {
-    el.sidebar.style.width = savedWidth + 'px';
-    el.sidebar.style.minWidth = savedWidth + 'px';
-  }
 
   ['temperature', 'topP', 'topK', 'repeatPenalty'].forEach(id => {
     $(id).addEventListener('input', (e) => $(id + 'Val').textContent = e.target.value);
@@ -844,6 +845,11 @@ function showWelcome() { el.welcomeScreen.style.display = 'flex'; el.messages.in
 
 function showShortcuts() { el.shortcutsModal.classList.add('active'); }
 function closeModal(id) { const m = $(id); if (m) m.classList.remove('active'); }
+function closeSidebar() {
+  el.sidebar.classList.remove('open');
+  const bd = document.getElementById('sidebarBackdrop');
+  if (bd) bd.remove();
+}
 
 function newConversation() {
   const id = Date.now().toString();
@@ -852,6 +858,7 @@ function newConversation() {
   saveConversations();
   renderConversations();
   showWelcome();
+  closeSidebar();
 }
 
 function loadConversation(id) {
@@ -935,6 +942,7 @@ function renderConversations() {
     item.addEventListener('click', (e) => {
       if (e.target.closest('[data-action="delete-conv"]')) return;
       loadConversation(convId);
+      closeSidebar();
     });
 
     item.querySelector('[data-action="delete-conv"]').addEventListener('click', (e) => {
