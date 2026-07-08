@@ -2,16 +2,15 @@ import { api } from './api.js';
 import { showToast } from './toast.js';
 import { el, $ } from './utils.js';
 import type { ModelInfo } from './types.js';
-
-export let modelMap: Record<string, ModelInfo> = {};
+import { AppState } from './state.js';
 
 export async function loadModels(): Promise<void> {
   try {
     const { models } = await api<{ models: ModelInfo[] }>('/api/models');
-    modelMap = {};
+    AppState.models = {};
     el.modelSelect.innerHTML = '<option value="">Select a model...</option>';
     models.forEach((m) => {
-      modelMap[m.path] = m;
+      AppState.models[m.path] = m;
       const o = document.createElement('option');
       o.value = m.path;
       const caps = m.capabilities && m.capabilities.length ? ` [${m.capabilities.join(', ')}]` : '';
@@ -25,7 +24,7 @@ export async function loadModels(): Promise<void> {
 
 export function updateModelInfo(): void {
   const path = el.modelSelect.value;
-  const m = modelMap[path];
+  const m = AppState.models[path];
   if (!m) {
     el.modelInfo.textContent = '';
     el.modelBadge.textContent = '';

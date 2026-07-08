@@ -11,9 +11,7 @@ import {
 } from './db.js';
 import { clearPendingAttachments } from './attachments.js';
 import { logError } from './logger.js';
-
-let conversations: Conversation[] = [];
-let currentConversationId: string | null = localStorage.getItem('currentConversationId') || null;
+import { AppState, setCurrentConvId } from './state.js';
 
 let loadPromise: Promise<void> | null = null;
 
@@ -23,7 +21,7 @@ export function loadConversations(): Promise<void> {
       try {
         const stored = await getAllConversations();
         if (stored && stored.length) {
-          conversations = stored;
+          AppState.conversations.list = stored;
           return;
         }
       } catch (e) {
@@ -39,7 +37,7 @@ export function loadConversations(): Promise<void> {
             : v && typeof v === 'object'
               ? (Object.values(v) as Conversation[])
               : [];
-          conversations = arr;
+          AppState.conversations.list = arr;
           localStorage.removeItem('conversations');
           await putConversations(arr);
         }
@@ -52,26 +50,23 @@ export function loadConversations(): Promise<void> {
 }
 
 export function getCurrentConv(): Conversation | null {
-  if (!Array.isArray(conversations)) return null;
-  return conversations.find((c) => c.id === currentConversationId) || null;
+  const { list, currentId } = AppState.conversations;
+  if (!Array.isArray(list)) return null;
+  return list.find((c) => c.id === currentId) || null;
 }
 
-export function setCurrentConvId(id: string | null): void {
-  currentConversationId = id;
-  if (id) localStorage.setItem('currentConversationId', id);
-  else localStorage.removeItem('currentConversationId');
-}
+export { setCurrentConvId } from './state.js';
 
 export async function saveConversations(): Promise<void> {
   try {
-    await putConversations(conversations);
+    await putConversations(AppState.conversations.list);
   } catch (e) {
     console.warn('Failed to persist conversations:', e);
   }
 }
 
 export function getConversations(): Conversation[] {
-  return Array.isArray(conversations) ? conversations : [];
+  return Array.isArray(AppState.conversations.list) ? AppState.conversations.list : [];
 }
 
 // ---------------------------------------------------------------------------
@@ -291,8 +286,8 @@ export function newConversation(): Conversation {
     createdAt: new Date().toISOString(),
     updatedAt: new Date().toISOString(),
   };
-  conversations.unshift(conv);
-  currentConversationId = conv.id;
+  AppState.conversations.list.unshift(conv);
+  setCurrentConvId(conv.id);
   saveConversations();
   clearChatView();
   clearPendingAttachments();
@@ -306,9 +301,9 @@ export function newConversation(): Conversation {
 }
 
 export function selectConversation(id: string): void {
-  const conv = conversations.find((c) => c.id === id);
+  const conv = AppState.conversations.list.find((c) => c.id === id);
   if (!conv) return;
-  currentConversationId = id;
+  setCurrentConvId(id);
   el.sendBtn.classList.remove('regenerate-mode');
   el.sendBtn.querySelector('.btn-icon')!.textContent = '➤';
   el.sendBtn.querySelector('.btn-label')!.textContent = 'Send';
@@ -372,7 +367,7 @@ export function updateMessageContent(msgId: string, content: string): void {
   if (!msgEl) return;
   const contentDiv = msgEl.querySelector('.message-content') as HTMLElement | null;
   if (contentDiv) {
-    const msg = conversations.flatMap((c) => c.messages).find((m) => m.id === msgId);
+    const msg = AppState.conversations.list.flatMap((c) => c.messages).find((m) => m.id === msgId);
     const thinking = msg?.thinking ?? '';
     const { thinking: t, content: c } = extractThinking(content);
     const th = t || thinking;
@@ -388,7 +383,7 @@ export function generateTitle(conv: Conversation): string {
 }
 
 export function renameConversation(id: string): void {
-  const conv = conversations.find((c) => c.id === id);
+  const conv = AppState.conversations.list.find((c) => c.id === id);
   if (!conv) return;
   const newTitle = prompt('Conversation name:', conv.title);
   if (newTitle && newTitle.trim()) {
@@ -396,16 +391,15 @@ export function renameConversation(id: string): void {
     conv.updatedAt = new Date().toISOString();
     saveConversations();
     import('./sidebar.js').then((m) => m.renderSidebar());
-    if (currentConversationId === id) el.chatTitle.textContent = conv.title;
+    if (AppState.conversations.currentId === id) el.chatTitle.textContent = conv.title;
   }
 }
 
 export function deleteConversation(id: string): void {
   if (!confirm('Delete this conversation?')) return;
-  conversations = conversations.filter((c) => c.id !== id);
-  if (currentConversationId === id) {
-    currentConversationId = null;
-    localStorage.removeItem('currentConversationId');
+  AppState.conversations.list = AppState.conversations.list.filter((c) => c.id !== id);
+  if (AppState.conversations.currentId === id) {
+    setCurrentConvId(null);
     clearChatView();
     showWelcome();
     el.restartBtn.classList.add('hidden');

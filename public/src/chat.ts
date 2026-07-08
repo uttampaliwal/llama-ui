@@ -2,8 +2,8 @@ import { api } from './api.js';
 import { showToast } from './toast.js';
 import { el, hideWelcome, showWelcome } from './utils.js';
 import { extractThinking } from './markdown.js';
-import { pendingAttachments, clearPendingAttachments } from './attachments.js';
-import { modelMap, updateModelInfo } from './models.js';
+import { clearPendingAttachments } from './attachments.js';
+import { updateModelInfo } from './models.js';
 import {
   getCurrentConv,
   saveConversations,
@@ -18,16 +18,14 @@ import {
 import type { ContentPart } from './types.js';
 import type { ChatMessage, ChatChunk, ChatCompletionResponse, StatusResponse, PayloadMessage } from './types.js';
 import { logWarn } from './logger.js';
+import { AppState } from './state.js';
 
-let currentAbortController: AbortController | null = null;
-let isGenerating = false;
-
-let editingMessageId: string | null = null;
+const { chat: chatState, attachments: pendingAttachments } = AppState;
 
 export function regenerateFrom(msgId: string): void {
   const conv = getCurrentConv();
   if (conv) conv._backup = JSON.parse(JSON.stringify(conv.messages));
-  editingMessageId = msgId;
+  chatState.editingMessageId = msgId;
   el.sendBtn.classList.add('regenerate-mode');
   el.sendBtn.querySelector('.btn-icon')!.textContent = '🔄';
   el.sendBtn.querySelector('.btn-label')!.textContent = 'Regenerate';
@@ -39,12 +37,12 @@ function resetRegenerateMode(): void {
   el.sendBtn.classList.remove('regenerate-mode');
   el.sendBtn.querySelector('.btn-icon')!.textContent = '➤';
   el.sendBtn.querySelector('.btn-label')!.textContent = 'Send';
-  editingMessageId = null;
+  chatState.editingMessageId = null;
   el.restartBtn.classList.add('hidden');
 }
 
 export async function sendMessage(): Promise<void> {
-  if (isGenerating) return;
+  if (chatState.isGenerating) return;
 
   const conv = getCurrentConv();
   const userInput = el.userInput.value.trim();
@@ -52,10 +50,10 @@ export async function sendMessage(): Promise<void> {
   const imageAttachments = attachments.filter((a) => a.kind === 'image');
   const textAttachments = attachments.filter((a) => a.kind !== 'image');
 
-  if (!userInput && attachments.length === 0 && !editingMessageId) return;
+  if (!userInput && attachments.length === 0 && !chatState.editingMessageId) return;
 
   if (imageAttachments.length) {
-    const model = modelMap[el.modelSelect.value];
+    const model = AppState.models[el.modelSelect.value];
     const caps = model && model.capabilities ? model.capabilities : [];
     if (!caps.includes('vision')) {
       resetRegenerateMode();
@@ -77,15 +75,15 @@ export async function sendMessage(): Promise<void> {
     return;
   }
 
-  isGenerating = true;
+  chatState.isGenerating = true;
 
   if (!conv) newConversation();
 
   const currentConv = getCurrentConv();
   if (!currentConv) return;
 
-  if (editingMessageId) {
-    const msgIdx = currentConv.messages.findIndex((m) => m.id === editingMessageId);
+  if (chatState.editingMessageId) {
+    const msgIdx = currentConv.messages.findIndex((m) => m.id === chatState.editingMessageId);
     if (msgIdx !== -1) {
       currentConv.messages = currentConv.messages.slice(0, msgIdx);
       saveConversations();
@@ -174,7 +172,7 @@ export async function sendMessage(): Promise<void> {
     messages: userMsgs,
   };
 
-  currentAbortController = new AbortController();
+  chatState.abortController = new AbortController();
   el.stopGenerateBtn.style.display = '';
   el.stopGenerateBtn.disabled = false;
   el.sendBtn.disabled = true;
@@ -201,7 +199,7 @@ export async function sendMessage(): Promise<void> {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(payload),
-      signal: currentAbortController.signal,
+      signal: chatState.abortController?.signal,
     });
 
     if (!res.ok) {
@@ -328,8 +326,8 @@ export async function sendMessage(): Promise<void> {
       saveConversations();
     }
   } finally {
-    currentAbortController = null;
-    isGenerating = false;
+    chatState.abortController = null;
+    chatState.isGenerating = false;
     el.stopGenerateBtn.disabled = true;
     el.stopGenerateBtn.style.display = 'none';
     el.sendBtn.disabled = false;
@@ -344,9 +342,9 @@ export async function sendMessage(): Promise<void> {
 }
 
 export function stopGeneration(): void {
-  if (currentAbortController) {
-    currentAbortController.abort();
-    currentAbortController = null;
+  if (chatState.abortController) {
+    chatState.abortController.abort();
+    chatState.abortController = null;
     const conv = getCurrentConv();
     if (conv) {
       conv.updatedAt = new Date().toISOString();
@@ -356,14 +354,14 @@ export function stopGeneration(): void {
 }
 
 export function restartConversation(): void {
-  isGenerating = false;
+  chatState.isGenerating = false;
   const conv = getCurrentConv();
   if (!conv) return;
   conv.messages = [];
   conv.updatedAt = new Date().toISOString();
-  if (currentAbortController) {
-    currentAbortController.abort();
-    currentAbortController = null;
+  if (chatState.abortController) {
+    chatState.abortController.abort();
+    chatState.abortController = null;
   }
   saveConversations();
   clearChatView();

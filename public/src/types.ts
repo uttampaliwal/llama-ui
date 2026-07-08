@@ -95,3 +95,27 @@ export function textOf(content: MessageContent): string {
   if (typeof content === 'string') return content;
   return content.map((part) => (part.type === 'text' ? part.text : '[image]')).join('\n');
 }
+
+// ---- Attachments ------------------------------------------------------------
+
+export type AttachKind =
+  | 'image'
+  | 'pdf'
+  | 'docx'
+  | 'xlsx'
+  | 'csv'
+  | 'zip'
+  | 'code'
+  | 'text';
+
+export interface Attachment {
+  id: string;
+  name: string;
+  mime: string;
+  kind: AttachKind;
+  dataUrl?: string;
+  text?: string;
+  previewHtml?: string;
+  error?: string;
+  truncated?: boolean;
+}

@@ -1,34 +1,13 @@
 import { showToast } from './toast.js';
 import { el, $, esc } from './utils.js';
-import { modelMap } from './models.js';
 import { logError } from './logger.js';
+import { AppState } from './state.js';
+import type { Attachment, AttachKind } from './types.js';
 
-export type AttachKind =
-  | 'image'
-  | 'pdf'
-  | 'docx'
-  | 'xlsx'
-  | 'csv'
-  | 'zip'
-  | 'code'
-  | 'text';
-
-export interface Attachment {
-  id: string;
-  name: string;
-  mime: string;
-  kind: AttachKind;
-  dataUrl?: string;
-  text?: string;
-  previewHtml?: string;
-  error?: string;
-  truncated?: boolean;
-}
-
-export let pendingAttachments: Attachment[] = [];
+export type { AttachKind, Attachment };
 
 export function clearPendingAttachments(): void {
-  pendingAttachments = [];
+  AppState.attachments = [];
   renderAttachmentList();
 }
 
@@ -307,7 +286,7 @@ export async function parseFile(file: File): Promise<Attachment> {
 export function renderAttachmentList(): void {
   const list = $('attachmentList');
   if (!list) return;
-  if (!pendingAttachments.length) {
+  if (!AppState.attachments.length) {
     el.attachmentPreview.style.display = 'none';
     list.innerHTML = '';
     el.attachBtn.classList.remove('has-attachment');
@@ -316,7 +295,7 @@ export function renderAttachmentList(): void {
   el.attachmentPreview.style.display = 'flex';
   el.attachBtn.classList.add('has-attachment');
   list.innerHTML = '';
-  for (const a of pendingAttachments) {
+  for (const a of AppState.attachments) {
     const chip = document.createElement('div');
     chip.className = 'attach-chip';
     const meta = a.error
@@ -348,13 +327,13 @@ export function renderAttachmentList(): void {
 }
 
 function removeAttachment(id: string): void {
-  pendingAttachments = pendingAttachments.filter((a) => a.id !== id);
+  AppState.attachments = AppState.attachments.filter((a) => a.id !== id);
   renderAttachmentList();
 }
 
 function checkVision(): void {
-  if (!pendingAttachments.some((a) => a.kind === 'image')) return;
-  const m = modelMap[el.modelSelect.value];
+  if (!AppState.attachments.some((a) => a.kind === 'image')) return;
+  const m = AppState.models[el.modelSelect.value];
   const caps = m && m.capabilities ? m.capabilities : [];
   if (!caps.includes('vision')) {
     showToast('Warning: current model does not support vision', 'error');
@@ -373,7 +352,7 @@ export function setupAttachmentListeners(): void {
       tasks.push(
         parseFile(file)
           .then((att) => {
-            pendingAttachments.push(att);
+            AppState.attachments.push(att);
           })
           .catch((e) => logError('parseFile', e, { name: file.name })),
       );
