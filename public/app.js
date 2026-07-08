@@ -6,6 +6,7 @@ let startTime = null;
 let abortController = null;
 let modelMap = {};
 let streamTokenCount = 0;
+let pendingAttachment = null;
 
 const $ = (id) => document.getElementById(id);
 const el = {
@@ -167,8 +168,32 @@ function setupListeners() {
 
   $('exportBtn').addEventListener('click', showExportModal);
 
-  $('attachBtn').addEventListener('click', () => {
-    showToast('File attachment coming soon', 'info');
+  $('attachBtn').addEventListener('click', () => $('fileInput').click());
+
+  $('fileInput').addEventListener('change', (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    if (!file.type.startsWith('image/')) {
+      showToast('Only image files are supported', 'error');
+      return;
+    }
+    const reader = new FileReader();
+    reader.onload = (ev) => {
+      pendingAttachment = { data: ev.target.result, name: file.name, type: file.type };
+      $('previewImage').src = ev.target.result;
+      $('attachmentPreview').style.display = 'flex';
+      $('attachBtn').classList.add('has-attachment');
+      $('userInput').focus();
+    };
+    reader.readAsDataURL(file);
+    e.target.value = '';
+  });
+
+  $('removeAttachBtn').addEventListener('click', () => {
+    pendingAttachment = null;
+    $('attachmentPreview').style.display = 'none';
+    $('previewImage').src = '';
+    $('attachBtn').classList.remove('has-attachment');
   });
 
   el.convSearch = $('convSearch');
@@ -291,7 +316,7 @@ async function stopServer() {
 
 async function sendMessage() {
   const content = el.userInput.value.trim();
-  if (!content || isGenerating) return;
+  if ((!content && !pendingAttachment) || isGenerating) return;
 
   const status = await api('/api/status');
   if (!status.running) return showToast('Start the server first', 'error');
@@ -299,7 +324,12 @@ async function sendMessage() {
   if (!currentConversationId) newConversation();
 
   const conv = conversations[currentConversationId];
-  conv.messages.push({ role: 'user', content, timestamp: Date.now() });
+  const msg = { role: 'user', content, timestamp: Date.now() };
+  if (pendingAttachment) {
+    msg.image = pendingAttachment.data;
+    msg.imageName = pendingAttachment.name;
+  }
+  conv.messages.push(msg);
   conv.updatedAt = Date.now();
   saveConversations();
   renderConversations();
@@ -307,7 +337,12 @@ async function sendMessage() {
   el.userInput.value = '';
   el.userInput.style.height = 'auto';
   hideWelcome();
-  appendMessage('user', content);
+  appendMessage('user', content, false, msg.image);
+
+  pendingAttachment = null;
+  $('attachmentPreview').style.display = 'none';
+  $('previewImage').src = '';
+  $('attachBtn').classList.remove('has-attachment');
 
   isGenerating = true;
   startTime = Date.now();
@@ -350,13 +385,27 @@ async function sendMessage() {
     const res = await fetch('/api/chat', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ messages: conv.messages.filter(m => m.role !== 'system') }),
+      body: JSON.stringify({
+        messages: conv.messages.filter(m => m.role !== 'system').map(m => {
+          if (m.image) {
+            return {
+              role: m.role,
+              content: [
+                { type: 'text', text: m.content || '' },
+                { type: 'image_url', image_url: { url: m.image } }
+              ]
+            };
+          }
+          return { role: m.role, content: m.content };
+        })
+      }),
       signal: abortController.signal
     });
 
     if (!res.ok) {
-      const err = await res.json();
-      throw new Error(err.error || 'Server error');
+      let errMsg = 'Server error';
+      try { const err = await res.json(); errMsg = err.error || JSON.stringify(err); } catch { errMsg = await res.text(); }
+      throw new Error(errMsg);
     }
 
     const reader = res.body.getReader();
@@ -404,6 +453,18 @@ async function sendMessage() {
       showToast(e.message, 'error');
       console.error('[Chat]', e);
     }
+    assistantDiv.remove();
+    conv.messages.pop();
+    const lastMsgDiv = el.messages.querySelector('.message.user:last-child');
+    if (lastMsgDiv) lastMsgDiv.remove();
+    saveConversations();
+    renderConversations();
+    isGenerating = false;
+    el.sendBtn.style.display = 'flex';
+    el.stopGenerateBtn.style.display = 'none';
+    el.userInput.disabled = false;
+    el.userInput.focus();
+    return;
   }
 
   const cursor = contentDiv.querySelector('.cursor');
@@ -466,7 +527,7 @@ function stopGeneration() {
   abortController = null;
 }
 
-function appendMessage(role, content, streaming = false) {
+function appendMessage(role, content, streaming = false, image = null) {
   const div = document.createElement('div');
   div.className = `message ${role}`;
   const avatar = role === 'user' ? 'U' : 'AI';
@@ -478,7 +539,11 @@ function appendMessage(role, content, streaming = false) {
       inner = buildMessageHtml(thinking, mainContent);
       copyText = mainContent || thinking;
     } else {
-      inner = formatMd(content) + `<div class="message-time">${new Date().toLocaleTimeString()}</div>`;
+      let imageHtml = '';
+      if (image) {
+        imageHtml = `<img src="${image}" class="message-image" alt="Attached image">`;
+      }
+      inner = imageHtml + formatMd(content) + `<div class="message-time">${new Date().toLocaleTimeString()}</div>`;
       copyText = content;
     }
   }
@@ -773,7 +838,7 @@ function loadConversation(id) {
   const conv = conversations[id];
   if (!conv.messages.length) { showWelcome(); return; }
   hideWelcome();
-  conv.messages.forEach(m => appendMessage(m.role, m.content));
+  conv.messages.forEach(m => appendMessage(m.role, m.content, false, m.image));
   renderConversations();
 }
 
