@@ -7,6 +7,8 @@ const app = express();
 app.use(express.json());
 app.use(express.static(path.join(__dirname, 'public'), { etag: false, lastModified: false, maxAge: 0 }));
 
+const net = require('net');
+
 const LLAMA_CPP_PATH = path.join(__dirname, '..', 'build', 'bin', 'Release');
 const MODELS_PATH = process.env.LLMODELS_PATH || 'C:\\Users\\uttam\\.lmstudio\\models';
 const SETTINGS_FILE = path.join(__dirname, 'settings.json');
@@ -87,23 +89,54 @@ function formatBytes(bytes) {
   return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
 }
 
-function startLlamaServer(modelPath) {
-  return new Promise((resolve, reject) => {
-    if (llamaProcess) {
-      try { llamaProcess.kill(); } catch (e) {}
-      llamaProcess = null;
-    }
+function findAvailablePort(startPort) {
+  return new Promise((resolve) => {
+    const server = net.createServer();
+    server.listen(startPort, '127.0.0.1', () => {
+      server.close(() => resolve(startPort));
+    });
+    server.on('error', () => {
+      resolve(findAvailablePort(startPort + 1));
+    });
+  });
+}
 
-    const serverPath = path.join(LLAMA_CPP_PATH, 'llama-server.exe');
-    if (!fs.existsSync(serverPath)) {
-      reject(new Error('llama-server.exe not found at: ' + serverPath));
-      return;
-    }
+function killLlamaProcess() {
+  if (!llamaProcess) return;
+  if (process.platform === 'win32') {
+    const { exec } = require('child_process');
+    exec(`taskkill /pid ${llamaProcess.pid} /f /t`, (err) => {
+      if (err) console.error('Failed to kill process tree:', err.message);
+    });
+  } else {
+    llamaProcess.kill();
+  }
+  llamaProcess = null;
+}
+
+async function startLlamaServer(modelPath) {
+  if (llamaProcess) {
+    killLlamaProcess();
+  }
+
+  const serverPath = path.join(LLAMA_CPP_PATH, 'llama-server.exe');
+  if (!fs.existsSync(serverPath)) {
+    throw new Error('llama-server.exe not found at: ' + serverPath);
+  }
+
+  const usedPort = await findAvailablePort(settings.port);
+  if (usedPort !== settings.port) {
+    console.log(`[WARN] Port ${settings.port} in use, using ${usedPort} instead`);
+    settings.port = usedPort;
+    saveSettings();
+  }
+
+  return new Promise((resolve, reject) => {
 
     const args = [
       '-m', modelPath,
       '--host', '0.0.0.0',
-      '--port', settings.port.toString(),
+      '--port', usedPort.toString(),
       '-c', settings.contextSize.toString(),
       '-ngl', settings.gpuLayers.toString(),
       '-t', settings.threads.toString()
@@ -133,7 +166,7 @@ function startLlamaServer(modelPath) {
           proc.stderr.on('data', (d) => process.stderr.write(d));
         } catch (e) {}
         console.log('[OK] Server ready');
-        resolve({ success: true, port: settings.port });
+        resolve({ success: true, port: usedPort });
       }
     };
 
@@ -173,9 +206,8 @@ function stopLlamaServer() {
         currentModel = null;
         resolve({ success: true });
       });
-      llamaProcess.kill();
+      killLlamaProcess();
       setTimeout(() => {
-        llamaProcess = null;
         currentModel = null;
         resolve({ success: true });
       }, 3000);
@@ -213,7 +245,25 @@ app.get('/api/settings', (req, res) => {
 });
 
 app.post('/api/settings', (req, res) => {
-  settings = { ...settings, ...req.body };
+  const body = req.body || {};
+  const sanitized = {};
+
+  const stringFields = ['systemPrompt'];
+  for (const f of stringFields) {
+    if (typeof body[f] === 'string') {
+      sanitized[f] = body[f].trim();
+    }
+  }
+
+  const numFields = ['temperature', 'topP', 'topK', 'repeatPenalty', 'maxTokens', 'contextSize', 'gpuLayers', 'threads'];
+  for (const f of numFields) {
+    if (body[f] !== undefined) {
+      const n = Number(body[f]);
+      if (!Number.isNaN(n)) sanitized[f] = n;
+    }
+  }
+
+  settings = { ...settings, ...sanitized };
   saveSettings();
   res.json({ success: true });
 });

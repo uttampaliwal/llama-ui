@@ -796,6 +796,11 @@ textarea#systemPrompt:focus {
 
 /* Input Area */
 .input-area {
+  flex-shrink: 0;
+  position: relative;
+  width: 100%;
+  max-width: 800px;
+  margin: 0 auto;
   padding: 16px 24px 20px;
   border-top: 1px solid var(--border);
   background: var(--bg-primary);
