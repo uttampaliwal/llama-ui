@@ -1,0 +1,181 @@
+/* Input Area */
+.model-badge {
+  font-size: 11px;
+  color: var(--text-muted);
+  padding: 0 4px 6px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 100%;
+}
+
+.input-area {
+  flex-shrink: 0;
+  position: relative;
+  width: 100%;
+  max-width: 800px;
+  margin: 0 auto;
+  padding: 16px 24px 20px;
+  border-top: 1px solid var(--border);
+  background: var(--bg-primary);
+}
+
+.input-container {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: 10px 16px;
+  transition: border-color var(--transition), box-shadow var(--transition);
+}
+
+.input-container:focus-within {
+  border-color: var(--accent);
+  box-shadow: 0 0 16px rgba(99, 102, 241, 0.1), inset 0 0 8px rgba(99, 102, 241, 0.02);
+}
+
+#userInput {
+  flex: 1;
+  background: transparent;
+  border: none;
+  outline: none;
+  color: var(--text-primary);
+  resize: none;
+  font-family: inherit;
+  font-size: 14px;
+  line-height: 1.5;
+  padding: 2px 0;
+  max-height: 200px;
+}
+
+#userInput:focus {
+  outline: none;
+}
+
+#userInput::placeholder {
+  color: var(--text-muted);
+}
+
+.input-actions {
+  display: flex;
+  gap: 4px;
+}
+
+.send-btn {
+  background: var(--accent);
+  color: white;
+  width: auto;
+  padding: 0 14px;
+  gap: 6px;
+  font-size: 13px;
+  font-weight: 500;
+  white-space: nowrap;
+}
+
+.send-btn .btn-icon {
+  font-size: 15px;
+  line-height: 1;
+}
+
+.send-btn:hover:not(:disabled) {
+  background: var(--accent-hover);
+}
+
+.send-btn.regenerate-mode {
+  background: var(--warning, #e6a817);
+}
+.send-btn.regenerate-mode:hover {
+  background: var(--warning-hover, #d4980f);
+}
+
+.stop-btn {
+  background: var(--danger);
+  color: white;
+}
+
+.stop-btn:hover {
+  background: #dc2626;
+}
+
+.input-footer {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 8px;
+  font-size: 11px;
+  color: var(--text-muted);
+}
+
+/* Attachment */
+.attach-btn {
+  flex-shrink: 0;
+}
+
+.attach-btn:hover {
+  color: var(--accent);
+}
+
+.attach-btn.has-attachment {
+  color: var(--accent);
+}
+
+.input-text-area {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 0;
+}
+
+.attachment-preview {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 8px;
+  background: var(--bg-tertiary);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+}
+
+.attachment-preview img {
+  max-width: 80px;
+  max-height: 60px;
+  border-radius: 4px;
+  object-fit: cover;
+}
+
+.attachment-name {
+  font-size: 12px;
+  color: var(--text-primary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 200px;
+}
+
+.remove-attach {
+  width: 22px;
+  height: 22px;
+  flex-shrink: 0;
+}
+
+.remove-attach:hover {
+  color: var(--danger);
+}
+
+.input-container::before {
+  content: '';
+  position: absolute;
+  inset: -1px;
+  border-radius: var(--radius-lg);
+  background: linear-gradient(135deg, rgba(99, 102, 241, 0.3), transparent, rgba(99, 102, 241, 0.3));
+  opacity: 0;
+  transition: opacity 0.3s;
+  pointer-events: none;
+}
+
+.input-container:focus-within::before {
+  opacity: 1;
+}
