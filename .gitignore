@@ -7,3 +7,6 @@ server.js
 public/src/*.js
 *.js.map
 *.tsbuildinfo
+
+# Vendored MathJax is regenerated from node_modules by `npm run vendor`
+public/vendor/mathjax/

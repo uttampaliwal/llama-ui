@@ -4,6 +4,8 @@
   "description": "Modern Web UI for llama.cpp",
   "main": "server.js",
   "scripts": {
+    "vendor": "node scripts/vendor.mjs",
+    "postinstall": "node scripts/vendor.mjs",
     "start": "npm run build && node server.js",
     "dev": "npm run build && node server.js",
     "build": "tsc && tsc -p tsconfig.server.json",
@@ -13,6 +15,8 @@
   "dependencies": {
     "cors": "^2.8.5",
     "express": "^4.18.2",
+    "highlight.js": "^11.9.0",
+    "mathjax": "^3.2.2",
     "ws": "^8.16.0"
   },
   "devDependencies": {

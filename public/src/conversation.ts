@@ -1,7 +1,8 @@
 import { el, showWelcome, downloadFile } from './utils.js';
 import { showToast } from './toast.js';
-import { buildMessageHtml, extractThinking, formatMd } from './markdown.js';
-import { renderMath, highlightCodeBlocks } from './latex.js';
+import { extractThinking, formatMd, escapeHtml } from './markdown.js';
+import { renderMath } from './latex.js';
+import { formatMessage } from './formatter.js';
 import { textOf, type ChatMessage, type Conversation, type ExportFormat } from './types.js';
 import {
   getAllConversations,
@@ -109,6 +110,26 @@ function convMessages(): ChatMessage[] {
   return conv ? conv.messages : [];
 }
 
+function fillContent(
+  contentDiv: HTMLElement,
+  thinking: string,
+  text: string,
+  ts: number | string | undefined,
+  id: string,
+): void {
+  formatMessage(thinking, text, ts)
+    .then((html) => {
+      contentDiv.innerHTML = html;
+      renderMath(contentDiv);
+      heights.set(id, contentDiv.offsetHeight);
+      scheduleWindowUpdate();
+    })
+    .catch(() => {
+      contentDiv.innerHTML = escapeHtml(text);
+      renderMath(contentDiv);
+    });
+}
+
 function buildMessageNode(msg: ChatMessage, streaming: boolean): HTMLElement {
   const div = document.createElement('div');
   div.className = `message ${msg.role}`;
@@ -117,20 +138,22 @@ function buildMessageNode(msg: ChatMessage, streaming: boolean): HTMLElement {
 
   if (msg.role === 'user') {
     div.innerHTML = `<div class="message-content">${msg.content}</div><div class="message-actions"><span class="edit-message-btn" title="Edit">✏️</span><span class="delete-message-btn" title="Delete">🗑️</span></div>`;
-  } else if (streaming && !msg.content) {
-    div.innerHTML = `<div class="message-content"><div class="thinking-container" style="display:none"><details class="thinking-block"><summary>Thinking...</summary><div class="thinking-content"></div></details></div><div class="response-container"></div></div><div class="message-actions"><span class="copy-message-btn" title="Copy">📋</span><span class="regenerate-btn" title="Regenerate">🔄</span><span class="delete-message-btn" title="Delete">🗑️</span></div>`;
-  } else {
-    const { thinking: t, content: c } = extractThinking(msg.content as string);
-    const th = t || thinking;
-    div.innerHTML = `<div class="message-content">${buildMessageHtml(th, c || (msg.content as string), msg.createdAt)}</div><div class="message-actions"><span class="copy-message-btn" title="Copy">📋</span><span class="regenerate-btn" title="Regenerate">🔄</span><span class="delete-message-btn" title="Delete">🗑️</span></div>`;
-  }
-  requestAnimationFrame(() => {
     const contentDiv = div.querySelector('.message-content');
-    if (contentDiv) {
-      renderMath(contentDiv);
-      highlightCodeBlocks(div);
-    }
-  });
+    if (contentDiv) requestAnimationFrame(() => renderMath(contentDiv));
+    return div;
+  }
+
+  if (streaming && !msg.content) {
+    div.innerHTML = `<div class="message-content"><div class="thinking-container" style="display:none"><details class="thinking-block"><summary>Thinking...</summary><div class="thinking-content"></div></details></div><div class="response-container"></div></div><div class="message-actions"><span class="copy-message-btn" title="Copy">📋</span><span class="regenerate-btn" title="Regenerate">🔄</span><span class="delete-message-btn" title="Delete">🗑️</span></div>`;
+    return div;
+  }
+
+  const { thinking: t, content: c } = extractThinking(msg.content as string);
+  const th = t || thinking;
+  const text = c || (msg.content as string);
+  div.innerHTML = `<div class="message-content"></div><div class="message-actions"><span class="copy-message-btn" title="Copy">📋</span><span class="regenerate-btn" title="Regenerate">🔄</span><span class="delete-message-btn" title="Delete">🗑️</span></div>`;
+  const contentDiv = div.querySelector('.message-content') as HTMLElement;
+  fillContent(contentDiv, th, text, msg.createdAt, msg.id);
   return div;
 }
 
@@ -330,11 +353,8 @@ export function updateMessageContent(msgId: string, content: string): void {
     const thinking = msg?.thinking ?? '';
     const { thinking: t, content: c } = extractThinking(content);
     const th = t || thinking;
-    contentDiv.innerHTML = buildMessageHtml(th, c || content, msg?.createdAt);
-    renderMath(contentDiv);
-    highlightCodeBlocks(msgEl);
+    fillContent(contentDiv, th, c || content, msg?.createdAt, msgId);
   }
-  scheduleWindowUpdate();
 }
 
 export function generateTitle(conv: Conversation): string {

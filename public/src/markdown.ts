@@ -87,12 +87,32 @@ function stashRawLatex(text: string, stash: (m: string) => string): string {
   return out;
 }
 
-export function formatMd(text: string): string {
+export function escapeHtml(s: string): string {
+  return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+}
+
+export type HighlightFn = (code: string, lang: string) => string;
+
+/** Highlights code using the page-loaded highlight.js (main thread). */
+const mainThreadHighlight: HighlightFn = (code, lang) => {
+  const hl = typeof window !== 'undefined' ? (window as unknown as { hljs?: any }).hljs : undefined;
+  if (hl && typeof hl.highlight === 'function') {
+    try {
+      const language = hl.getLanguage && hl.getLanguage(lang) ? lang : 'plaintext';
+      return hl.highlight(code, { language }).value;
+    } catch {
+      return escapeHtml(code);
+    }
+  }
+  return escapeHtml(code);
+};
+
+export function formatMd(text: string, highlight: HighlightFn = mainThreadHighlight): string {
   if (!text) return '';
 
   const mathStore: string[] = [];
   const stash = (m: string): string => {
-    const escaped = m.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+    const escaped = escapeHtml(m);
     mathStore.push(escaped);
     return `@@MJ${mathStore.length - 1}@@`;
   };
@@ -105,8 +125,14 @@ export function formatMd(text: string): string {
 
   t = stashRawLatex(t, stash);
 
+  // Extract fenced code blocks before escaping so the highlighter sees raw code.
+  const codeStore: { lang: string; code: string }[] = [];
+  t = t.replace(/```(\w*)\n([\s\S]*?)```/g, (_, lang, code) => {
+    codeStore.push({ lang: lang || 'plaintext', code: code.replace(/\n$/, '') });
+    return `@@CODE${codeStore.length - 1}@@`;
+  });
+
   t = t.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
-  t = t.replace(/```(\w*)\n([\s\S]*?)```/g, (_, lang, code) => `<pre><code class="lang-${lang}">${code.trim()}</code></pre>`);
   t = t.replace(/`([^`]+)`/g, '<code>$1</code>');
   t = t.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
   t = t.replace(/\*(.+?)\*/g, '<em>$1</em>');
@@ -154,7 +180,12 @@ export function formatMd(text: string): string {
         result += '<br>';
       } else if (/^---+\s*$/.test(trimmed)) {
         result += '<hr>';
-      } else if (trimmed.startsWith('<pre>') || trimmed.startsWith('<ul>') || trimmed.startsWith('<ol>')) {
+      } else if (
+        trimmed.startsWith('<pre>') ||
+        trimmed.startsWith('<ul>') ||
+        trimmed.startsWith('<ol>') ||
+        /^@@CODE\d+@@$/.test(trimmed)
+      ) {
         result += trimmed;
       } else {
         result += `<p>${trimmed}</p>`;
@@ -162,6 +193,12 @@ export function formatMd(text: string): string {
     }
   }
   if (inList) result += `</${listType}>`;
+
+  for (let i = 0; i < codeStore.length; i++) {
+    const { lang, code } = codeStore[i];
+    const inner = highlight(code, lang);
+    result = result.split('@@CODE' + i + '@@').join(`<pre><code class="lang-${lang}">${inner}</code></pre>`);
+  }
 
   for (let i = 0; i < mathStore.length; i++) {
     result = result.split('@@MJ' + i + '@@').join(mathStore[i]);
@@ -190,12 +227,17 @@ export function extractThinking(text: string): { thinking: string; content: stri
   return { thinking: thinking.trim(), content: content.trim() };
 }
 
-export function buildMessageHtml(thinking: string, answer: string, timestamp?: number | string): string {
+export function buildMessageHtml(
+  thinking: string,
+  answer: string,
+  timestamp?: number | string,
+  highlight?: HighlightFn,
+): string {
   let html = '';
   if (thinking) {
-    html += `<details class="thinking-block"><summary>Thinking...</summary><div class="thinking-content">${formatMd(thinking)}</div></details>`;
+    html += `<details class="thinking-block"><summary>Thinking...</summary><div class="thinking-content">${formatMd(thinking, highlight)}</div></details>`;
   }
-  html += formatMd(answer || '');
+  html += formatMd(answer || '', highlight);
   if (thinking && !answer) {
     html += `<div class="truncated-note">Response truncated — the model stopped before producing an answer. Expand "Thinking..." to view its reasoning.</div>`;
   }

@@ -17,10 +17,7 @@
   <link rel="stylesheet" href="css/modal.css?v=20260708c">
   <link rel="stylesheet" href="css/toast.css?v=20260708c">
   <link rel="stylesheet" href="css/responsive.css?v=20260708c">
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github-dark.min.css">
+  <link rel="stylesheet" href="/vendor/highlight/styles/github-dark.min.css">
 </head>
 <body>
   <div class="app">
@@ -328,6 +325,7 @@
 
   <script>
     window.MathJax = {
+      loader: { paths: { mathjax: '/vendor/mathjax/es5' } },
       tex: {
         inlineMath: [['\\(', '\\)'], ['$', '$']],
         displayMath: [['\\[', '\\]'], ['$$', '$$']]
@@ -345,9 +343,12 @@
       }
     };
   </script>
-  <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+  <script id="MathJax-script" async src="/vendor/mathjax/es5/tex-mml-chtml.js"></script>
 
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+  <script type="module">
+    import hljs from '/vendor/highlight/highlight.esm.js';
+    window.hljs = hljs;
+  </script>
   <script type="module" src="src/main.js?v=20260708d"></script>
 </body>
 </html>
