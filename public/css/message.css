@@ -7,12 +7,14 @@
   display: flex;
   flex-direction: column;
   padding: 20px 0;
+  align-items: center;
 }
 
 /* Virtual-scroll spacer that reserves space for off-screen messages */
 .vspacer {
   flex: 0 0 auto;
   width: 100%;
+  max-width: 800px;
 }
 
 .message {
@@ -21,6 +23,8 @@
   gap: 16px;
   position: relative;
   animation: messageSlideIn 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+  width: 100%;
+  max-width: 800px;
 }
 
 @keyframes messageSlideIn {
@@ -40,7 +44,7 @@
 
 .message.assistant {
   background: var(--bg-secondary);
-  max-width: 760px;
+  max-width: 800px;
   width: fit-content;
   transition: background var(--transition);
 }
@@ -286,6 +290,13 @@
   transition: opacity 0.2s ease, transform 0.2s ease;
   pointer-events: none;
   z-index: 10;
+}
+
+/* User messages: position actions at bottom-right to avoid overlap with input */
+.message.user .message-actions {
+  top: auto;
+  bottom: 8px;
+  right: 8px;
 }
 
 .message:hover .message-actions {

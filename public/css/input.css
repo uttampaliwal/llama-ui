@@ -34,7 +34,7 @@
 
 .input-container:focus-within {
   border-color: var(--accent);
-  box-shadow: 0 2px 16px rgba(99, 102, 241, 0.15), 0 1px 4px rgba(0, 0, 0, 0.06);
+  box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.2), 0 2px 16px rgba(99, 102, 241, 0.15);
 }
 
 #userInput {
@@ -47,12 +47,13 @@
   font-family: inherit;
   font-size: 14px;
   line-height: 1.5;
-  padding: 2px 0;
+  padding: 4px 0;
   max-height: 200px;
 }
 
 #userInput:focus {
-  outline: none;
+  outline: none !important;
+  box-shadow: none !important;
 }
 
 #userInput::placeholder {
@@ -267,19 +268,4 @@
 
 .remove-attach:hover {
   color: var(--danger);
-}
-
-.input-container::before {
-  content: '';
-  position: absolute;
-  inset: -1px;
-  border-radius: var(--radius-lg);
-  background: linear-gradient(135deg, rgba(99, 102, 241, 0.3), transparent, rgba(99, 102, 241, 0.3));
-  opacity: 0;
-  transition: opacity 0.3s;
-  pointer-events: none;
-}
-
-.input-container:focus-within::before {
-  opacity: 1;
 }
