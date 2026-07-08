@@ -34,13 +34,14 @@ export function formatMessage(
   thinking: string,
   answer: string,
   timestamp?: number | string,
+  thinkingDuration?: number,
 ): Promise<string> {
-  const key = `${thinking} ${answer} ${timestamp ?? ''}`;
+  const key = `${thinking} ${answer} ${timestamp ?? ''} ${thinkingDuration ?? ''}`;
   const cached = cache.get(key);
   if (cached) return Promise.resolve(cached);
 
   const w = getWorker();
-  if (!w) return Promise.resolve(buildMessageHtml(thinking, answer, timestamp));
+  if (!w) return Promise.resolve(buildMessageHtml(thinking, answer, timestamp, undefined, thinkingDuration));
 
   return new Promise<string>((resolve) => {
     const id = nextId++;
@@ -56,9 +57,9 @@ export function formatMessage(
     setTimeout(() => {
       if (pending.has(id)) {
         pending.delete(id);
-        done(buildMessageHtml(thinking, answer, timestamp));
+        done(buildMessageHtml(thinking, answer, timestamp, undefined, thinkingDuration));
       }
     }, 2000);
-    w.postMessage({ id, thinking, answer, timestamp });
+    w.postMessage({ id, thinking, answer, timestamp, thinkingDuration });
   });
 }

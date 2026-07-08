@@ -113,8 +113,9 @@ function fillContent(
   text: string,
   ts: number | string | undefined,
   id: string,
+  thinkingDuration?: number,
 ): void {
-  formatMessage(thinking, text, ts)
+  formatMessage(thinking, text, ts, thinkingDuration)
     .then((html) => {
       contentDiv.innerHTML = html;
       renderMath(contentDiv);
@@ -199,7 +200,7 @@ function buildMessageNode(msg: ChatMessage, streaming: boolean): HTMLElement {
   const text = c || (msg.content as string);
   div.innerHTML = `<div class="message-content"></div><div class="message-actions" role="group" aria-label="Message actions">${assistantActionsHtml()}</div>`;
   const contentDiv = div.querySelector('.message-content') as HTMLElement;
-  fillContent(contentDiv, th, text, msg.createdAt, msg.id);
+  fillContent(contentDiv, th, text, msg.createdAt, msg.id, msg.thinkingDuration);
   return div;
 }
 
@@ -402,7 +403,7 @@ export function updateMessageContent(msgId: string, content: string): void {
     const thinking = msg?.thinking ?? '';
     const { thinking: t, content: c } = extractThinking(content);
     const th = t || thinking;
-    fillContent(contentDiv, th, c || content, msg?.createdAt, msgId);
+    fillContent(contentDiv, th, c || content, msg?.createdAt, msgId, msg?.thinkingDuration);
   }
 }
 

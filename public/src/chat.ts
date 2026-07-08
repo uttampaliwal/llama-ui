@@ -179,6 +179,8 @@ export async function sendMessage(): Promise<void> {
 
   let startTime = Date.now();
   let streamTokenCount = 0;
+  let thinkingStartTime: number | null = null;
+  let thinkingDuration: number | undefined;
   if (el.latency) el.latency.textContent = '0s';
   if (el.tokenCount) el.tokenCount.textContent = '0 tok';
 
@@ -256,6 +258,15 @@ export async function sendMessage(): Promise<void> {
               fullContent += delta;
               assistantMsg.content = fullContent;
               const { thinking: t, content: c } = extractThinking(fullContent);
+              
+              // Track thinking duration
+              if (t && !thinkingStartTime) {
+                thinkingStartTime = Date.now();
+              } else if (!t && thinkingStartTime) {
+                thinkingDuration = Date.now() - thinkingStartTime;
+                thinkingStartTime = null;
+              }
+              
               updateStreamingContent(assistantMsg.id, fullContent, t, c);
               const elapsed = (Date.now() - startTime) / 1000;
               if (el.latency) el.latency.textContent = elapsed.toFixed(1) + 's';
@@ -293,6 +304,13 @@ export async function sendMessage(): Promise<void> {
       const { thinking } = extractThinking(assistantMsg.content as string);
       if (thinking) {
         assistantMsg.thinking = thinking;
+        // Finalize thinking duration if still tracking
+        if (thinkingStartTime) {
+          thinkingDuration = Date.now() - thinkingStartTime;
+        }
+        if (thinkingDuration) {
+          assistantMsg.thinkingDuration = thinkingDuration;
+        }
         saveConversations();
         const { content: c } = extractThinking(assistantMsg.content as string);
         updateStreamingContent(

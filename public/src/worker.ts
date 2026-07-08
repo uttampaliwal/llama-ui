@@ -20,11 +20,12 @@ function escapeHtml(s: string): string {
 }
 
 self.onmessage = async (e: MessageEvent) => {
-  const { id, thinking, answer, timestamp } = e.data as {
+  const { id, thinking, answer, timestamp, thinkingDuration } = e.data as {
     id: number;
     thinking: string;
     answer: string;
     timestamp?: number | string;
+    thinkingDuration?: number;
   };
 
   let hl: Hljs | undefined;
@@ -44,6 +45,6 @@ self.onmessage = async (e: MessageEvent) => {
     }
   };
 
-  const html = buildMessageHtml(thinking, answer, timestamp, highlight);
+  const html = buildMessageHtml(thinking, answer, timestamp, highlight, thinkingDuration);
   (self as unknown as { postMessage(message: unknown): void }).postMessage({ id, html });
 };

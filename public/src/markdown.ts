@@ -232,16 +232,29 @@ export function buildMessageHtml(
   answer: string,
   timestamp?: number | string,
   highlight?: HighlightFn,
+  thinkingDuration?: number,
 ): string {
   let html = '';
   if (thinking) {
-    html += `<details class="thinking-block"><summary>Thinking...</summary><div class="thinking-content">${formatMd(thinking, highlight)}</div></details>`;
+    const durationText = thinkingDuration != null ? ` (${formatDuration(thinkingDuration)})` : '';
+    const tokenCount = thinking.split(/\s+/).length;
+    const escapedThinking = escapeHtml(thinking);
+    html += `<details class="thinking-block"><summary class="thinking-summary"><span class="thinking-icon">🧠</span><span class="thinking-label">Reasoning${durationText}</span><span class="thinking-meta">${tokenCount} tokens</span></summary><div class="thinking-content"><pre class="thinking-pre">${escapedThinking}</pre></div></details>`;
   }
   html += formatMd(answer || '', highlight);
   if (thinking && !answer) {
-    html += `<div class="truncated-note">Response truncated — the model stopped before producing an answer. Expand "Thinking..." to view its reasoning.</div>`;
+    html += `<div class="truncated-note">Response truncated — the model stopped before producing an answer. Expand "Reasoning" to view its reasoning.</div>`;
   }
   const ts = timestamp ? new Date(timestamp).toLocaleTimeString() : new Date().toLocaleTimeString();
   html += `<div class="message-time">${ts}</div>`;
   return html;
+}
+
+function formatDuration(ms: number): string {
+  if (ms < 1000) return `${ms}ms`;
+  const secs = Math.round(ms / 1000);
+  if (secs < 60) return `${secs} second${secs === 1 ? '' : 's'}`;
+  const mins = Math.floor(secs / 60);
+  const remainSecs = secs % 60;
+  return `${mins}m ${remainSecs}s`;
 }

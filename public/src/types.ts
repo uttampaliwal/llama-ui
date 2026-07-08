@@ -20,6 +20,7 @@ export interface ChatMessage {
   content: MessageContent;
   createdAt?: string;
   thinking?: string;
+  thinkingDuration?: number;
 }
 
 /** A message as sent to the chat API (no client-only fields like id). */
