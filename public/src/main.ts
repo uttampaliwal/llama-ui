@@ -27,6 +27,77 @@ import { renderSidebar, setupSidebarListeners } from './sidebar.js';
 import { textOf, type ExportFormat } from './types.js';
 import { logError, logInfo } from './logger.js';
 
+function getGreeting(): string {
+  const h = new Date().getHours();
+  if (h < 12) return 'Good morning';
+  if (h < 18) return 'Good afternoon';
+  return 'Good evening';
+}
+
+function timeAgo(dateStr: string): string {
+  const diff = Date.now() - new Date(dateStr).getTime();
+  const mins = Math.floor(diff / 60000);
+  if (mins < 1) return 'Just now';
+  if (mins < 60) return `${mins}m ago`;
+  const hrs = Math.floor(mins / 60);
+  if (hrs < 24) return `${hrs}h ago`;
+  const days = Math.floor(hrs / 24);
+  if (days < 7) return `${days}d ago`;
+  return new Date(dateStr).toLocaleDateString();
+}
+
+function updateWelcomeScreen(): void {
+  const greetingEl = $('welcomeGreeting');
+  const recentList = $('recentChatsList');
+
+  if (greetingEl) greetingEl.textContent = getGreeting();
+
+  if (recentList) {
+    const convs = getConversations()
+      .filter((c) => !c.archived)
+      .sort((a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime())
+      .slice(0, 4);
+
+    if (convs.length === 0) {
+      recentList.innerHTML = '<div class="welcome-empty-text">No recent chats</div>';
+    } else {
+      recentList.innerHTML = convs
+        .map(
+          (c) => `
+          <div class="welcome-recent-item" data-id="${c.id}" tabindex="0" role="button" aria-label="${c.title}">
+            <span class="welcome-recent-item-title">${c.title}</span>
+            <span class="welcome-recent-item-time">${timeAgo(c.updatedAt)}</span>
+          </div>`,
+        )
+        .join('');
+
+      recentList.querySelectorAll('.welcome-recent-item').forEach((item) => {
+        const handler = () => {
+          const id = (item as HTMLElement).dataset.id;
+          if (id) selectConversation(id);
+        };
+        item.addEventListener('click', handler);
+        item.addEventListener('keydown', (e: Event) => {
+          if ((e as KeyboardEvent).key === 'Enter' || (e as KeyboardEvent).key === ' ') {
+            e.preventDefault();
+            handler();
+          }
+        });
+      });
+    }
+  }
+
+  document.querySelectorAll('.welcome-suggest-btn').forEach((btn) => {
+    btn.addEventListener('click', () => {
+      const prompt = (btn as HTMLElement).dataset.prompt;
+      if (prompt) {
+        el.userInput.value = prompt;
+        el.userInput.focus();
+      }
+    });
+  });
+}
+
 async function init(): Promise<void> {
   await loadConversations().catch((e) => logError('init:loadConversations', e));
   setupVirtualScroll();
@@ -49,6 +120,7 @@ async function init(): Promise<void> {
   checkStatus().catch((e) => logError('init:checkStatus', e));
   setupAttachmentListeners();
   setupSidebarListeners();
+  updateWelcomeScreen();
 
   // Folder creation
   const newFolderBtn = $('newFolderBtn');

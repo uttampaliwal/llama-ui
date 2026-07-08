@@ -103,48 +103,141 @@
   justify-content: center;
   padding: 40px;
   text-align: center;
+  max-width: 760px;
+  margin: 0 auto;
 }
 
-.welcome-icon {
-  color: var(--accent);
-  margin-bottom: 24px;
-  opacity: 0.5;
+.welcome-greeting {
+  margin-bottom: 40px;
 }
 
-.welcome-screen h1 {
-  font-size: 28px;
+.welcome-greeting h1 {
+  font-size: 32px;
   font-weight: 600;
   margin-bottom: 8px;
 }
 
-.welcome-screen p {
+.welcome-greeting p {
   color: var(--text-muted);
-  margin-bottom: 32px;
+  font-size: 16px;
+  margin-bottom: 0;
 }
 
-.quick-actions {
-  display: flex;
-  gap: 12px;
+.welcome-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 24px;
+  width: 100%;
 }
 
-.quick-action {
+.welcome-section {
+  text-align: left;
+}
+
+.welcome-shortcuts {
+  grid-column: 1 / -1;
+}
+
+.welcome-section-title {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-bottom: 12px;
+}
+
+.welcome-recent-list {
   display: flex;
-  align-items: center;
+  flex-direction: column;
   gap: 8px;
-  padding: 12px 20px;
+}
+
+.welcome-recent-item {
+  padding: 10px 14px;
   background: var(--bg-secondary);
   border: 1px solid var(--border);
-  border-radius: var(--radius-lg);
-  color: var(--text-secondary);
+  border-radius: var(--radius);
+  cursor: pointer;
+  transition: all var(--transition);
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.welcome-recent-item:hover {
+  background: var(--bg-hover);
+  border-color: var(--accent);
+}
+
+.welcome-recent-item-title {
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--text-primary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.welcome-recent-item-time {
+  font-size: 12px;
+  color: var(--text-muted);
+}
+
+.welcome-empty-text {
+  font-size: 13px;
+  color: var(--text-muted);
+  padding: 10px 0;
+}
+
+.welcome-suggest-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.welcome-suggest-btn {
+  padding: 10px 14px;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
   cursor: pointer;
   transition: all var(--transition);
   font-size: 14px;
+  color: var(--text-secondary);
+  text-align: left;
+  font-family: inherit;
 }
 
-.quick-action:hover {
+.welcome-suggest-btn:hover {
   background: var(--bg-hover);
   border-color: var(--accent);
   color: var(--text-primary);
+}
+
+.welcome-shortcuts-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+  justify-content: center;
+}
+
+.welcome-shortcut {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  color: var(--text-muted);
+}
+
+.welcome-shortcut kbd {
+  font-family: inherit;
+  font-size: 12px;
+  padding: 2px 6px;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  color: var(--text-secondary);
 }
 
 /* Scroll-to-bottom button */
