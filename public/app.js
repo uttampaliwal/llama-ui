@@ -88,25 +88,31 @@ async function checkStatus() {
     const data = await api('/api/status');
     const dot = el.statusIndicator.querySelector('.status-dot');
     const txt = el.statusIndicator.querySelector('.status-text');
-    const welcomeSubtitle = el.welcomeScreen?.querySelector('p');
+    const welcomeSubtitle = el.welcomeScreen ? el.welcomeScreen.querySelector('p') : null;
     if (data.running) {
       dot.className = 'status-dot connected';
       txt.textContent = 'Connected';
       el.startBtn.disabled = true;
       el.stopBtn.disabled = false;
       el.sendBtn.disabled = false;
-      if (welcomeSubtitle) welcomeSubtitle.textContent = 'Select a model from the sidebar to begin chatting.';
+      if (welcomeSubtitle && welcomeSubtitle.textContent.includes('start the server')) {
+        welcomeSubtitle.textContent = 'Select a model and enter a message below to begin chatting.';
+      }
     } else {
       dot.className = 'status-dot';
       txt.textContent = 'Disconnected';
       el.startBtn.disabled = false;
       el.stopBtn.disabled = true;
       el.sendBtn.disabled = true;
-      if (welcomeSubtitle) welcomeSubtitle.textContent = 'Select a model and start the server to begin chatting.';
+      if (welcomeSubtitle) {
+        welcomeSubtitle.textContent = 'Select a local model and start the server to initialize the session.';
+      }
     }
   } catch (e) {
-    el.statusIndicator.querySelector('.status-dot').className = 'status-dot';
-    el.statusIndicator.querySelector('.status-text').textContent = 'Error';
+    const dot = el.statusIndicator.querySelector('.status-dot');
+    const txt = el.statusIndicator.querySelector('.status-text');
+    if (dot) dot.className = 'status-dot';
+    if (txt) txt.textContent = 'Error';
   }
 }
 

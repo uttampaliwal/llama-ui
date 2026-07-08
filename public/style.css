@@ -299,16 +299,17 @@ textarea#systemPrompt:focus {
 }
 
 .conversation-item {
+  position: relative;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 10px 14px;
+  padding: 12px 14px;
   margin-bottom: 4px;
+  background: transparent;
   border-radius: var(--radius);
-  color: var(--text-secondary);
   cursor: pointer;
   transition: all var(--transition);
-  border-left: 2px solid transparent;
+  border-left: 3px solid transparent;
 }
 
 .conversation-item:hover {
@@ -345,28 +346,24 @@ textarea#systemPrompt:focus {
   align-items: center;
   justify-content: center;
   gap: 8px;
-  padding: 8px 16px;
-  border: none;
-  border-radius: var(--radius);
+  padding: 10px 16px;
+  font-family: inherit;
   font-size: 13px;
   font-weight: 500;
+  border-radius: var(--radius);
   cursor: pointer;
   transition: all var(--transition);
-  font-family: inherit;
-}
-
-.btn:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
 }
 
 .btn-primary {
   background: var(--accent);
-  color: white;
+  color: #ffffff;
+  border: 1px solid transparent;
 }
 
 .btn-primary:hover:not(:disabled) {
   background: var(--accent-hover);
+  transform: translateY(-1px);
 }
 
 .btn-secondary {
@@ -379,27 +376,26 @@ textarea#systemPrompt:focus {
   background: var(--bg-hover);
 }
 
-#startBtn {
-  font-weight: 500;
-  transition: background var(--transition), transform var(--transition);
-}
-
-#startBtn:hover:not(:disabled) {
-  transform: translateY(-1px);
-}
-
-#stopBtn {
-  background: transparent;
+.btn-danger {
+  background: rgba(239, 68, 68, 0.05);
   color: var(--danger);
-  border: 1px solid rgba(239, 68, 68, 0.4);
-  font-weight: 500;
-  transition: all var(--transition);
+  border: 1px solid rgba(239, 68, 68, 0.3);
 }
 
-#stopBtn:hover:not(:disabled) {
-  background: rgba(239, 68, 68, 0.1);
+.btn-danger:hover:not(:disabled) {
+  background: rgba(239, 68, 68, 0.15);
   border-color: var(--danger);
-  box-shadow: 0 0 12px rgba(239, 68, 68, 0.2);
+  box-shadow: 0 0 12px rgba(239, 68, 68, 0.15);
+}
+
+.btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+  transform: none !important;
+  box-shadow: none !important;
+  background: var(--bg-tertiary);
+  color: var(--text-muted);
+  border-color: var(--border);
 }
 
 .btn-full {
@@ -809,31 +805,31 @@ textarea#systemPrompt:focus {
   position: relative;
   display: flex;
   align-items: center;
-  gap: 8px;
-  padding: 8px 12px;
-  background: rgba(18, 18, 20, 0.7);
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
-  border: 1px solid rgba(99, 102, 241, 0.15);
+  gap: 12px;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border);
   border-radius: var(--radius-lg);
-  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+  padding: 10px 16px;
+  transition: border-color var(--transition), box-shadow var(--transition);
 }
 
 .input-container:focus-within {
   border-color: var(--accent);
-  box-shadow: 0 0 20px rgba(99, 102, 241, 0.15), inset 0 0 20px rgba(99, 102, 241, 0.05);
+  box-shadow: 0 0 16px rgba(99, 102, 241, 0.1), inset 0 0 8px rgba(99, 102, 241, 0.02);
 }
 
 #userInput {
   flex: 1;
   background: transparent;
   border: none;
+  outline: none;
   color: var(--text-primary);
-  font-size: 14px;
-  font-family: inherit;
   resize: none;
-  max-height: 200px;
+  font-family: inherit;
+  font-size: 14px;
   line-height: 1.5;
+  padding: 2px 0;
+  max-height: 200px;
 }
 
 #userInput:focus {
