@@ -1,17 +1,12 @@
-import { el, $, hideWelcome, showWelcome, showShortcuts, closeModal, closeSidebar } from './utils.js';
+import { el, $, showShortcuts, closeSidebar } from './utils.js';
 import { showToast } from './toast.js';
 import { loadModels, updateModelInfo } from './models.js';
 import { loadSettings, applySettings, renderPresets, applyPreset, savePreset, deletePreset } from './settings.js';
 import { setupAttachmentListeners } from './attachments.js';
 import { sendMessage, stopGeneration, restartConversation, regenerateFrom } from './chat.js';
-import {
-  getConversations, getCurrentConv, saveConversations, renderConversation,
-  renderMessage, exportConversation, newConversation, selectConversation,
-  renameConversation, deleteConversation
-} from './conversation.js';
+import { getConversations, getCurrentConv, saveConversations, renderConversation, exportConversation, newConversation, selectConversation } from './conversation.js';
 import { checkStatus, startServer, stopServer } from './server.js';
 import { renderSidebar, setupSidebarListeners } from './sidebar.js';
-import { renderMath, highlightCodeBlocks } from './latex.js';
 
 function init() {
   try {
