@@ -147,17 +147,28 @@ export async function sendMessage() {
     import('./sidebar.js').then(m => m.renderSidebar());
   }
 
-  const userMsgs = currentConv.messages.map((m, i) => {
-    if (m.role === 'user') {
-      if (Array.isArray(m.content)) return m;
-      return { role: 'user', content: m.content };
+  // Build payload messages, ensuring strict user/assistant alternation
+  const userMsgs = [];
+  for (const m of currentConv.messages) {
+    if (m.role === 'user' || m.role === 'assistant') {
+      const last = userMsgs[userMsgs.length - 1];
+      if (last && last.role === m.role) {
+        // Skip consecutive same-role messages to satisfy Jinja template
+        userMsgs[userMsgs.length - 1] = {
+          role: m.role,
+          content: last.content + '\n\n' + (Array.isArray(m.content) ? JSON.stringify(m.content) : m.content)
+        };
+      } else {
+        userMsgs.push({
+          role: m.role,
+          content: Array.isArray(m.content) ? m.content : m.content
+        });
+      }
     }
-    return { role: 'assistant', content: m.content };
-  });
+  }
 
-  const systemPrompt = el.systemPrompt.value.trim();
   const payload = {
-    messages: systemPrompt ? [{ role: 'system', content: systemPrompt }, ...userMsgs] : userMsgs
+    messages: userMsgs
   };
 
   currentAbortController = new AbortController();

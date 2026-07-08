@@ -369,6 +369,30 @@ app.post('/api/settings', (req, res) => {
 
 // --- Chat endpoint with SSE streaming ---
 
+function sanitizeMessages(messages) {
+  // Merge consecutive same-role messages to satisfy chat template
+  // role alternation requirements (user/assistant/user/assistant/...)
+  const result = [];
+  for (const msg of messages) {
+    const last = result[result.length - 1];
+    if (last && last.role === msg.role && msg.role !== 'system') {
+      // Merge content
+      if (Array.isArray(last.content) && Array.isArray(msg.content)) {
+        last.content = [...last.content, ...msg.content];
+      } else if (Array.isArray(last.content)) {
+        last.content = [...last.content, { type: 'text', text: String(msg.content) }];
+      } else if (Array.isArray(msg.content)) {
+        last.content = [{ type: 'text', text: String(last.content) }, ...msg.content];
+      } else {
+        last.content = (last.content || '') + '\n' + (msg.content || '');
+      }
+    } else {
+      result.push({ ...msg });
+    }
+  }
+  return result;
+}
+
 app.post('/api/chat', async (req, res) => {
   const { messages } = req.body;
 
@@ -376,10 +400,12 @@ app.post('/api/chat', async (req, res) => {
     return res.status(503).json({ error: 'Server not running' });
   }
 
-  const allMessages = [
+  // Only prepend system prompt if the frontend didn't already include one
+  const hasSystem = messages.length > 0 && messages[0].role === 'system';
+  const allMessages = sanitizeMessages(hasSystem ? messages : [
     { role: 'system', content: settings.systemPrompt },
     ...messages
-  ];
+  ]);
 
   console.log('[CHAT] Request with', allMessages.length, 'messages');
 
