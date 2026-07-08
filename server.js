@@ -4,7 +4,7 @@ const path = require('path');
 const fs = require('fs');
 
 const app = express();
-app.use(express.json());
+app.use(express.json({ limit: '50mb' }));
 app.use(express.static(path.join(__dirname, 'public'), { etag: false, lastModified: false, maxAge: 0 }));
 
 const net = require('net');
@@ -16,6 +16,7 @@ const SETTINGS_FILE = path.join(__dirname, 'settings.json');
 let llamaProcess = null;
 let currentModel = null;
 let isStarting = false;
+let startPromise = null;
 
 function loadSettings() {
   try {
@@ -122,105 +123,120 @@ function killLlamaProcess() {
 }
 
 async function startLlamaServer(modelPath) {
-  if (isStarting) throw new Error('Server start already in progress');
+  if (isStarting) {
+    if (startPromise) return startPromise;
+    throw new Error('Server start already in progress');
+  }
   isStarting = true;
 
-  try {
-    if (llamaProcess) {
-      await killLlamaProcess();
+  startPromise = (async () => {
+    let usedPort;
+    let serverPath;
+
+    try {
+      if (llamaProcess) {
+        await killLlamaProcess();
+      }
+
+      serverPath = path.join(LLAMA_CPP_PATH, 'llama-server.exe');
+      if (!fs.existsSync(serverPath)) {
+        throw new Error('llama-server.exe not found at: ' + serverPath);
+      }
+
+      usedPort = await findAvailablePort(settings.port);
+      if (usedPort !== settings.port) {
+        console.log(`[WARN] Port ${settings.port} in use, using ${usedPort} instead`);
+        settings.port = usedPort;
+        saveSettings();
+      }
+    } catch (e) {
+      isStarting = false;
+      startPromise = null;
+      throw e;
     }
 
-    const serverPath = path.join(LLAMA_CPP_PATH, 'llama-server.exe');
-    if (!fs.existsSync(serverPath)) {
-      throw new Error('llama-server.exe not found at: ' + serverPath);
-    }
+    return new Promise((resolve, reject) => {
 
-    const usedPort = await findAvailablePort(settings.port);
-    if (usedPort !== settings.port) {
-      console.log(`[WARN] Port ${settings.port} in use, using ${usedPort} instead`);
-      settings.port = usedPort;
-      saveSettings();
-    }
-  } catch (e) {
-    isStarting = false;
-    throw e;
-  }
+      const serverReadyPatterns = ['listening on', 'running on', 'starting the server', 'server started', 'http://'];
 
-  return new Promise((resolve, reject) => {
+      const args = [
+        '-m', modelPath,
+        '--host', '0.0.0.0',
+        '--port', usedPort.toString(),
+        '-c', settings.contextSize.toString(),
+        '-ngl', settings.gpuLayers.toString(),
+        '-t', settings.threads.toString()
+      ];
 
-    const serverReadyPatterns = ['listening on', 'running on', 'starting the server', 'server started', 'http://'];
+      console.log('Starting:', serverPath);
+      console.log('Args:', args.join(' '));
 
-    const args = [
-      '-m', modelPath,
-      '--host', '0.0.0.0',
-      '--port', usedPort.toString(),
-      '-c', settings.contextSize.toString(),
-      '-ngl', settings.gpuLayers.toString(),
-      '-t', settings.threads.toString()
-    ];
+      const proc = spawn(serverPath, args, {
+        stdio: ['pipe', 'pipe', 'pipe'],
+        windowsHide: true
+      });
+      llamaProcess = proc;
 
-    console.log('Starting:', serverPath);
-    console.log('Args:', args.join(' '));
+      let started = false;
 
-    const proc = spawn(serverPath, args, {
-      stdio: ['pipe', 'pipe', 'pipe'],
-      windowsHide: true
-    });
-    llamaProcess = proc;
+      const onOutput = (data) => {
+        const output = data.toString();
+        process.stdout.write(output);
+        if (!started && serverReadyPatterns.some(p => output.toLowerCase().includes(p))) {
+          started = true;
+          currentModel = modelPath;
+          try {
+            proc.stdout.removeAllListeners('data');
+            proc.stderr.removeAllListeners('data');
+            proc.stdout.on('data', (d) => process.stdout.write(d));
+            proc.stderr.on('data', (d) => process.stderr.write(d));
+          } catch (e) {}
+          console.log('[OK] Server ready');
+          resolve({ success: true, port: usedPort });
+        }
+      };
 
-    let started = false;
+      proc.stdout.on('data', onOutput);
+      proc.stderr.on('data', onOutput);
 
-    const onOutput = (data) => {
-      const output = data.toString();
-      process.stdout.write(output);
-      if (!started && serverReadyPatterns.some(p => output.toLowerCase().includes(p))) {
-        started = true;
-        isStarting = false;
-        currentModel = modelPath;
+      const cleanup = () => {
         try {
           proc.stdout.removeAllListeners('data');
           proc.stderr.removeAllListeners('data');
-          proc.stdout.on('data', (d) => process.stdout.write(d));
-          proc.stderr.on('data', (d) => process.stderr.write(d));
         } catch (e) {}
-        console.log('[OK] Server ready');
-        resolve({ success: true, port: usedPort });
-      }
-    };
+      };
 
-    proc.stdout.on('data', onOutput);
-    proc.stderr.on('data', onOutput);
-
-    const cleanup = () => {
-      isStarting = false;
-      try {
-        proc.stdout.removeAllListeners('data');
-        proc.stderr.removeAllListeners('data');
-      } catch (e) {}
-    };
-
-    proc.on('error', (err) => {
-      console.error('Spawn error:', err);
-      cleanup();
-      if (!started) reject(err);
-    });
-
-    proc.on('exit', (code) => {
-      console.log('Server exited:', code);
-      cleanup();
-      llamaProcess = null;
-      currentModel = null;
-      if (!started) reject(new Error('Server exited with code ' + code));
-    });
-
-    setTimeout(() => {
-      if (!started) {
+      proc.on('error', (err) => {
+        console.error('Spawn error:', err);
         cleanup();
-        try { proc.kill(); } catch (e) {}
-        reject(new Error('Timeout waiting for server'));
-      }
-    }, 60000);
-  });
+        if (!started) reject(err);
+      });
+
+      proc.on('exit', (code) => {
+        console.log('Server exited:', code);
+        cleanup();
+        llamaProcess = null;
+        currentModel = null;
+        if (!started) reject(new Error('Server exited with code ' + code));
+      });
+
+      setTimeout(() => {
+        if (!started) {
+          cleanup();
+          try { proc.kill(); } catch (e) {}
+          reject(new Error('Timeout waiting for server'));
+        }
+      }, 60000);
+    });
+  })();
+
+  try {
+    const result = await startPromise;
+    return result;
+  } finally {
+    isStarting = false;
+    startPromise = null;
+  }
 }
 
 async function stopLlamaServer() {

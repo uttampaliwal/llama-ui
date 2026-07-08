@@ -421,7 +421,7 @@ async function sendMessage() {
 
     if (!res.ok) {
       let errMsg = 'Server error';
-      try { const err = await res.json(); errMsg = err.error || JSON.stringify(err); } catch { errMsg = await res.text(); }
+      try { const body = await res.text(); try { const err = JSON.parse(body); errMsg = err.error || JSON.stringify(err); } catch { errMsg = body; } } catch {};
       throw new Error(errMsg);
     }
 
