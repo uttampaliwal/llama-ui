@@ -34,7 +34,8 @@ export async function startServer(): Promise<void> {
       showToast(data.error || 'Failed to start', 'error');
     }
   } catch (e) {
-    showToast('Failed to start server', 'error');
+    const msg = (e as Error).message || 'Failed to start server';
+    showToast(msg, 'error');
   }
   await checkStatus();
 }

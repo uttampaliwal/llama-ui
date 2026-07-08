@@ -102,6 +102,162 @@
   color: var(--text-muted);
 }
 
+/* ---- Model cards -------------------------------------------------------- */
+.model-list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  max-height: 240px;
+  overflow-y: auto;
+  margin-bottom: 8px;
+}
+
+.model-empty {
+  text-align: center;
+  padding: 16px;
+  font-size: 12px;
+  color: var(--text-muted);
+}
+
+.model-card {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 10px 12px;
+  background: var(--bg-tertiary);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  cursor: pointer;
+  transition: all var(--transition);
+}
+
+.model-card:hover {
+  border-color: var(--text-muted);
+  background: var(--bg-hover);
+}
+
+.model-card.selected {
+  border-color: var(--accent);
+  background: var(--accent-dim);
+}
+
+.model-card.loaded {
+  border-left: 3px solid var(--success);
+}
+
+/* Top row: status + name */
+.model-card-top {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.model-status-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.model-status-dot.loaded {
+  background: var(--success);
+  box-shadow: 0 0 6px var(--success);
+}
+
+.model-status-dot.available {
+  background: var(--text-muted);
+}
+
+.model-card-name {
+  flex: 1;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text-primary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.model-card-check {
+  width: 16px;
+  height: 16px;
+  border: 2px solid var(--text-muted);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  transition: all var(--transition);
+}
+
+.model-card.selected .model-card-check {
+  border-color: var(--accent);
+  background: var(--accent);
+}
+
+.model-card.selected .model-card-check::after {
+  content: '✓';
+  font-size: 10px;
+  color: white;
+  font-weight: bold;
+}
+
+/* Middle row: capability badges */
+.model-card-caps {
+  display: flex;
+  gap: 4px;
+  flex-wrap: wrap;
+}
+
+.model-cap-badge {
+  font-size: 10px;
+  font-weight: 500;
+  padding: 2px 6px;
+  border-radius: 3px;
+  background: var(--bg-primary);
+  color: var(--text-secondary);
+  border: 1px solid var(--border);
+}
+
+.model-cap-badge.vision {
+  background: rgba(139, 92, 246, 0.15);
+  color: #a78bfa;
+  border-color: rgba(139, 92, 246, 0.3);
+}
+
+.model-cap-badge.tool {
+  background: rgba(59, 130, 246, 0.15);
+  color: #60a5fa;
+  border-color: rgba(59, 130, 246, 0.3);
+}
+
+/* Bottom row: metadata */
+.model-card-meta {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 11px;
+  color: var(--text-muted);
+}
+
+.model-meta-item {
+  display: flex;
+  align-items: center;
+  gap: 3px;
+}
+
+.model-meta-item svg {
+  width: 12px;
+  height: 12px;
+  opacity: 0.6;
+}
+
+.model-card-size {
+  font-weight: 500;
+  color: var(--text-secondary);
+}
+
 .server-controls {
   display: flex;
   gap: 8px;

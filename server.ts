@@ -190,7 +190,7 @@ function findGGUFModels(): ModelInfo[] {
         const fullPath = path.join(dir, item.name);
         if (item.isDirectory()) {
           scanDir(fullPath, depth + 1);
-        } else if (item.name.endsWith('.gguf')) {
+        } else if (item.name.endsWith('.gguf') && !item.name.toLowerCase().includes('mmproj')) {
           const stats = fs.statSync(fullPath);
           models.push({
             name: item.name,
@@ -287,14 +287,12 @@ async function startLlamaServer(modelPath: string): Promise<{ success: boolean; 
 
       const caps = getModelCapabilities(modelPath);
       let mmprojPath: string | null = null;
-      if (caps.includes('vision')) {
-        const dir = path.dirname(modelPath);
-        try {
-          const files = fs.readdirSync(dir);
-          const mmproj = files.find((f) => f.includes('mmproj') && f.endsWith('.gguf'));
-          if (mmproj) mmprojPath = path.join(dir, mmproj);
-        } catch (e) {}
-      }
+      const dir = path.dirname(modelPath);
+      try {
+        const files = fs.readdirSync(dir);
+        const mmproj = files.find((f) => f.includes('mmproj') && f.endsWith('.gguf'));
+        if (mmproj) mmprojPath = path.join(dir, mmproj);
+      } catch (e) {}
 
       const args = [
         '-m', modelPath,
@@ -316,10 +314,12 @@ async function startLlamaServer(modelPath: string): Promise<{ success: boolean; 
       llamaProcess = proc;
 
       let started = false;
+      let stderrOutput = '';
 
       const onOutput = (data: Buffer): void => {
         const output = data.toString();
         process.stdout.write(output);
+        stderrOutput += output;
         if (!started && serverReadyPatterns.some((p) => output.toLowerCase().includes(p))) {
           started = true;
           currentModel = modelPath;
@@ -355,7 +355,10 @@ async function startLlamaServer(modelPath: string): Promise<{ success: boolean; 
         cleanup();
         llamaProcess = null;
         currentModel = null;
-        if (!started) reject(new Error('Server exited with code ' + code));
+        if (!started) {
+          const detail = stderrOutput.trim().split('\n').slice(-10).join('\n');
+          reject(new Error('Server exited with code ' + code + (detail ? '\n' + detail : '')));
+        }
       });
 
       setTimeout(() => {

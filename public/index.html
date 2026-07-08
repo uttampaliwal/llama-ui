@@ -52,16 +52,19 @@
       </div>
 
       <div class="sidebar-section">
-        <label class="section-label" for="modelSelect">Model</label>
-        <div class="model-select-row">
-          <select id="modelSelect" class="model-select" aria-label="Select a model">
-            <option value="">Select a model...</option>
-          </select>
-          <button class="icon-btn" id="refreshModelsBtn" title="Refresh model list" aria-label="Refresh model list">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+        <div class="section-label-row">
+          <label class="section-label">Model</label>
+          <button class="icon-btn icon-btn-sm" id="refreshModelsBtn" title="Refresh model list" aria-label="Refresh model list">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
               <polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/>
             </svg>
           </button>
+        </div>
+        <select id="modelSelect" class="model-select" aria-label="Select a model" style="display:none">
+          <option value="">Select a model...</option>
+        </select>
+        <div class="model-list" id="modelList" role="listbox" aria-label="Available models">
+          <div class="model-empty">Loading models...</div>
         </div>
         <div class="model-info" id="modelInfo" aria-live="polite"></div>
         <div class="server-controls" role="group" aria-label="Server controls">
