@@ -9,7 +9,8 @@
   z-index: 100;
   opacity: 0;
   pointer-events: none;
-  transition: opacity var(--transition);
+  transition: opacity 0.2s ease;
+  backdrop-filter: blur(4px);
 }
 
 .modal-overlay.active {
@@ -24,6 +25,12 @@
   width: 90%;
   max-width: 400px;
   box-shadow: var(--shadow);
+  transform: scale(0.95) translateY(10px);
+  transition: transform 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.modal-overlay.active .modal {
+  transform: scale(1) translateY(0);
 }
 
 .modal-header {

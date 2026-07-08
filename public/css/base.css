@@ -14,6 +14,8 @@ body {
   background: var(--bg-primary);
   color: var(--text-primary);
   line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
 .app {
@@ -26,6 +28,17 @@ body {
 }
 
 .hidden { display: none !important; }
+
+/* Global transitions for interactive elements */
+button, a, input, textarea, select {
+  transition: all var(--transition);
+}
+
+/* Focus visible for accessibility */
+:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
 
 /* Scrollbar */
 ::-webkit-scrollbar {
@@ -43,4 +56,10 @@ body {
 
 ::-webkit-scrollbar-thumb:hover {
   background: var(--bg-active);
+}
+
+/* Selection color */
+::selection {
+  background: var(--accent-dim);
+  color: var(--text-primary);
 }

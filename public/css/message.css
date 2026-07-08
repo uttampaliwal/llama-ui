@@ -20,12 +20,18 @@
   padding: 16px 24px;
   gap: 16px;
   position: relative;
-  animation: fadeIn 0.2s ease;
+  animation: messageSlideIn 0.3s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
-@keyframes fadeIn {
-  from { opacity: 0; transform: translateY(8px); }
-  to { opacity: 1; transform: translateY(0); }
+@keyframes messageSlideIn {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 .message.user {
@@ -36,6 +42,11 @@
   background: var(--bg-secondary);
   max-width: 760px;
   width: fit-content;
+  transition: background var(--transition);
+}
+
+.message.assistant:hover {
+  background: var(--bg-hover);
 }
 
 .message-avatar {

@@ -11,6 +11,11 @@
   border-radius: var(--radius);
   cursor: pointer;
   transition: all var(--transition);
+  transform: translateY(0);
+}
+
+.btn:active:not(:disabled) {
+  transform: translateY(1px) scale(0.98);
 }
 
 .btn-primary {
@@ -22,6 +27,12 @@
 .btn-primary:hover:not(:disabled) {
   background: var(--accent-hover);
   transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(99, 102, 241, 0.3);
+}
+
+.btn-primary:active:not(:disabled) {
+  transform: translateY(0) scale(0.98);
+  box-shadow: 0 2px 6px rgba(99, 102, 241, 0.2);
 }
 
 .btn-secondary {
@@ -32,6 +43,7 @@
 
 .btn-secondary:hover:not(:disabled) {
   background: var(--bg-hover);
+  border-color: var(--text-muted);
 }
 
 .btn-danger {
@@ -72,9 +84,15 @@
   color: var(--text-secondary);
   cursor: pointer;
   transition: all var(--transition);
+  transform: scale(1);
 }
 
 .icon-btn:hover {
   background: var(--bg-hover);
   color: var(--text-primary);
+  transform: scale(1.05);
+}
+
+.icon-btn:active {
+  transform: scale(0.95);
 }
