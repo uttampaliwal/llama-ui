@@ -1,9 +1,10 @@
 import { api } from './api.js';
 import { showToast } from './toast.js';
-import { el, hideWelcome, showWelcome } from './utils.js';
+import { el, $, hideWelcome, showWelcome } from './utils.js';
 import { extractThinking } from './markdown.js';
 import { clearPendingAttachments } from './attachments.js';
 import { updateModelInfo } from './models.js';
+import { updateTokensPerSecond, updateContextUsage } from './status.js';
 import {
   getCurrentConv,
   saveConversations,
@@ -354,6 +355,8 @@ export async function sendMessage(): Promise<void> {
       const tps = (streamTokenCount / parseFloat(totalTime.toString())).toFixed(1);
       if (el.latency) el.latency.textContent = totalTime.toFixed(1) + 's';
       if (el.tokenCount) el.tokenCount.textContent = streamTokenCount + ' tok \u00B7 ' + tps + '/s';
+      updateTokensPerSecond(parseFloat(tps));
+      updateContextUsage(streamTokenCount, parseInt($<HTMLInputElement>('contextSize').value) || 2048);
     }
     updateModelInfo();
   }

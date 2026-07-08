@@ -27,6 +27,7 @@ import {
 import { checkStatus, startServer, stopServer } from './server.js';
 import { renderSidebar, setupSidebarListeners } from './sidebar.js';
 import { initMobileGestures } from './mobile.js';
+import { initStatusBar } from './status.js';
 import { textOf, type ExportFormat } from './types.js';
 import { logError, logInfo } from './logger.js';
 
@@ -126,6 +127,7 @@ async function init(): Promise<void> {
   initSettingsNav();
   initTheme();
   initMobileGestures();
+  initStatusBar();
   updateWelcomeScreen();
 
   // Folder creation

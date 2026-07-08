@@ -180,6 +180,18 @@ function getModelCapabilities(modelPath: string): string[] {
   }
 }
 
+function getGpuInfo(): { used: number; total: number } | null {
+  try {
+    const os = require('os');
+    const cpus = os.cpus();
+    // Approximate GPU usage from memory (not real GPU monitoring)
+    // Real GPU monitoring would require nvidia-smi or similar
+    return null;
+  } catch (e) {
+    return null;
+  }
+}
+
 function findGGUFModels(): ModelInfo[] {
   const models: ModelInfo[] = [];
   try {
@@ -402,6 +414,19 @@ app.get('/api/models', (_req: express.Request, res: express.Response) => {
 
 app.get('/api/status', (_req: express.Request, res: express.Response) => {
   res.json({ running: llamaProcess !== null, currentModel, port: settings.port });
+});
+
+app.get('/api/system', (_req: express.Request, res: express.Response) => {
+  const mem = process.memoryUsage();
+  res.json({
+    gpu: getGpuInfo(),
+    ram: {
+      used: mem.heapUsed,
+      total: mem.heapTotal,
+      systemTotal: require('os').totalmem(),
+      systemFree: require('os').freemem()
+    }
+  });
 });
 
 app.post('/api/server/start', async (req: express.Request, res: express.Response) => {

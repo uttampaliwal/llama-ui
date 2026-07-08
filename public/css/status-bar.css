@@ -1,0 +1,74 @@
+/* Status Bar */
+.status-bar {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  padding: 6px 16px;
+  background: var(--bg-secondary);
+  border-top: 1px solid var(--border);
+  font-size: 11px;
+  color: var(--text-muted);
+  flex-shrink: 0;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+.status-bar-item {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  padding: 4px 8px;
+  border-radius: 4px;
+  white-space: nowrap;
+  transition: background var(--transition);
+}
+
+.status-bar-item:hover {
+  background: var(--bg-hover);
+  color: var(--text-secondary);
+}
+
+.status-bar-item svg {
+  opacity: 0.6;
+  flex-shrink: 0;
+}
+
+.status-bar-divider {
+  width: 1px;
+  height: 14px;
+  background: var(--border);
+  margin: 0 4px;
+  flex-shrink: 0;
+}
+
+/* Status indicators */
+.status-bar-item.active {
+  color: var(--success);
+}
+
+.status-bar-item.warning {
+  color: var(--warning);
+}
+
+.status-bar-item.error {
+  color: var(--danger);
+}
+
+/* Mobile */
+@media (max-width: 768px) {
+  .status-bar {
+    justify-content: flex-start;
+    padding: 8px 12px;
+    gap: 8px;
+  }
+
+  .status-bar-item {
+    padding: 6px 10px;
+    font-size: 12px;
+  }
+
+  .status-bar-divider {
+    margin: 0 2px;
+  }
+}

@@ -122,6 +122,10 @@ export function updateModelInfo(): void {
   const caps = m.capabilities && m.capabilities.length ? m.capabilities.join(', ') : 'text';
   el.modelInfo.textContent = `${m.name} · ${m.sizeFormatted} · ctx ${ctx} · GPU ${gpu} · ${thr}T`;
   el.modelBadge.textContent = `${m.name} · ${caps}`;
+
+  // Update status bar
+  const contextSize = parseInt($<HTMLInputElement>('contextSize').value) || 0;
+  import('./status.js').then(mod => mod.setModelInfo(m.name, contextSize));
 }
 
 function esc(s: string): string {
