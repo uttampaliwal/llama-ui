@@ -10,6 +10,7 @@ import {
   deletePreset,
   initSettingsNav,
 } from './settings.js';
+import { initTheme } from './theme.js';
 import { setupAttachmentListeners } from './attachments.js';
 import { sendMessage, stopGeneration, restartConversation, regenerateFrom } from './chat.js';
 import {
@@ -122,6 +123,7 @@ async function init(): Promise<void> {
   setupAttachmentListeners();
   setupSidebarListeners();
   initSettingsNav();
+  initTheme();
   updateWelcomeScreen();
 
   // Folder creation

@@ -207,6 +207,119 @@
   text-decoration: underline;
 }
 
+/* Theme Selector */
+.theme-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+  gap: 12px;
+}
+
+.theme-option {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  padding: 12px;
+  background: var(--bg-tertiary);
+  border: 2px solid var(--border);
+  border-radius: var(--radius);
+  cursor: pointer;
+  transition: all var(--transition);
+  font-family: inherit;
+}
+
+.theme-option:hover {
+  border-color: var(--text-muted);
+  transform: translateY(-2px);
+}
+
+.theme-option.active {
+  border-color: var(--accent);
+  background: var(--accent-dim);
+}
+
+.theme-preview {
+  width: 48px;
+  height: 32px;
+  border-radius: 6px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  position: relative;
+  overflow: hidden;
+}
+
+.theme-preview::before {
+  content: '';
+  position: absolute;
+  top: 4px;
+  left: 4px;
+  width: 16px;
+  height: 4px;
+  border-radius: 2px;
+}
+
+.theme-preview::after {
+  content: '';
+  position: absolute;
+  top: 12px;
+  left: 4px;
+  width: 24px;
+  height: 3px;
+  border-radius: 2px;
+  opacity: 0.5;
+}
+
+.dark-preview {
+  background: #1a1a1d;
+}
+.dark-preview::before { background: #6366f1; }
+.dark-preview::after { background: #a0a0a6; }
+
+.light-preview {
+  background: #f8f9fa;
+}
+.light-preview::before { background: #6366f1; }
+.light-preview::after { background: #495057; }
+
+.oled-preview {
+  background: #000000;
+}
+.oled-preview::before { background: #8b5cf6; }
+.oled-preview::after { background: #a3a3a3; }
+
+.dracula-preview {
+  background: #282a36;
+}
+.dracula-preview::before { background: #bd93f9; }
+.dracula-preview::after { background: #ccc; }
+
+.nord-preview {
+  background: #2e3440;
+}
+.nord-preview::before { background: #88c0d0; }
+.nord-preview::after { background: #d8dee9; }
+
+.catppuccin-preview {
+  background: #1e1e2e;
+}
+.catppuccin-preview::before { background: #cba6f7; }
+.catppuccin-preview::after { background: #bac2de; }
+
+.gruvbox-preview {
+  background: #282828;
+}
+.gruvbox-preview::before { background: #d65d0e; }
+.gruvbox-preview::after { background: #ebdbb2; }
+
+.theme-name {
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--text-secondary);
+}
+
+.theme-option.active .theme-name {
+  color: var(--accent);
+}
+
 .settings-footer {
   padding-top: 20px;
   margin-top: auto;
