@@ -9,9 +9,29 @@ app.use(express.static(path.join(__dirname, 'public'), { etag: false, lastModifi
 
 const LLAMA_CPP_PATH = path.join(__dirname, '..', 'build', 'bin', 'Release');
 const MODELS_PATH = process.env.LLMODELS_PATH || 'C:\\Users\\uttam\\.lmstudio\\models';
+const SETTINGS_FILE = path.join(__dirname, 'settings.json');
 
 let llamaProcess = null;
 let currentModel = null;
+
+function loadSettings() {
+  try {
+    if (fs.existsSync(SETTINGS_FILE)) {
+      const saved = JSON.parse(fs.readFileSync(SETTINGS_FILE, 'utf8'));
+      settings = { ...settings, ...saved };
+    }
+  } catch (e) {
+    console.error('Error loading settings:', e.message);
+  }
+}
+
+function saveSettings() {
+  try {
+    fs.writeFileSync(SETTINGS_FILE, JSON.stringify(settings, null, 2));
+  } catch (e) {
+    console.error('Error saving settings:', e.message);
+  }
+}
 
 const defaultSettings = {
   port: 8080,
@@ -27,6 +47,8 @@ const defaultSettings = {
 };
 
 let settings = { ...defaultSettings };
+
+loadSettings();
 
 function findGGUFModels() {
   const models = [];
@@ -192,6 +214,7 @@ app.get('/api/settings', (req, res) => {
 
 app.post('/api/settings', (req, res) => {
   settings = { ...settings, ...req.body };
+  saveSettings();
   res.json({ success: true });
 });
 

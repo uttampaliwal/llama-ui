@@ -3,6 +3,7 @@ let currentConversationId = null;
 let isGenerating = false;
 let startTime = null;
 let abortController = null;
+let modelMap = {};
 
 const $ = (id) => document.getElementById(id);
 const el = {
@@ -36,14 +37,26 @@ async function init() {
 async function loadModels() {
   try {
     const { models } = await api('/api/models');
+    modelMap = {};
     el.modelSelect.innerHTML = '<option value="">Select a model...</option>';
     models.forEach(m => {
+      modelMap[m.path] = m;
       const o = document.createElement('option');
       o.value = m.path;
       o.textContent = `${m.name} (${m.sizeFormatted})`;
       el.modelSelect.appendChild(o);
     });
   } catch (e) { showToast('Failed to load models', 'error'); }
+}
+
+function updateModelInfo() {
+  const path = el.modelSelect.value;
+  const m = modelMap[path];
+  if (!m) { el.modelInfo.textContent = ''; return; }
+  const ctx = parseInt($('contextSize').value) || '-';
+  const gpu = parseInt($('gpuLayers').value) || '-';
+  const thr = parseInt($('threads').value) || '-';
+  el.modelInfo.textContent = `${m.name} · ${m.sizeFormatted} · ctx ${ctx} · GPU ${gpu} · ${thr}T`;
 }
 
 async function loadSettings() {
@@ -62,6 +75,7 @@ async function loadSettings() {
     $('repeatPenalty').value = s.repeatPenalty;
     $('repeatPenaltyVal').textContent = s.repeatPenalty;
     el.systemPrompt.value = s.systemPrompt;
+    updateModelInfo();
   } catch (e) {}
 }
 
@@ -94,6 +108,7 @@ function setupListeners() {
   el.stopBtn.addEventListener('click', stopServer);
   el.sendBtn.addEventListener('click', sendMessage);
   el.stopGenerateBtn.addEventListener('click', stopGeneration);
+  el.modelSelect.addEventListener('change', updateModelInfo);
 
   el.userInput.addEventListener('keydown', (e) => {
     if (e.key === 'Enter' && !e.shiftKey) {
@@ -161,7 +176,7 @@ async function startServer() {
     });
     if (data.success) {
       showToast('Server started', 'success');
-      el.modelInfo.textContent = modelPath.split('\\').pop();
+      updateModelInfo();
     } else {
       showToast(data.error || 'Failed to start', 'error');
     }
@@ -202,6 +217,8 @@ async function sendMessage() {
   el.sendBtn.style.display = 'none';
   el.stopGenerateBtn.style.display = 'flex';
   el.userInput.disabled = true;
+  el.tokenCount.textContent = '';
+  el.latency.textContent = '';
 
   const assistantDiv = appendMessage('assistant', '', true);
   const contentDiv = assistantDiv.querySelector('.message-content');
@@ -456,10 +473,15 @@ function formatMd(text) {
   let listType = '';
 
   for (const line of lines) {
+    const headingMatch = line.match(/^(#{1,6})\s+(.*)/);
     const bulletMatch = line.match(/^\s*[\*\-]\s+(.*)/);
     const numMatch = line.match(/^\s*\d+\.\s+(.*)/);
 
-    if (bulletMatch) {
+    if (headingMatch) {
+      if (inList) { result += `</${listType}>`; inList = false; }
+      const level = headingMatch[1].length;
+      result += `<h${level}>${headingMatch[2]}</h${level}>`;
+    } else if (bulletMatch) {
       if (!inList || listType !== 'ul') {
         if (inList) result += `</${listType}>`;
         result += '<ul>';
@@ -663,10 +685,17 @@ function collectSettings() {
 async function applySettings() {
   const s = collectSettings();
   if (!s) return;
+  const btn = $('applySettings');
+  btn.disabled = true;
+  const original = btn.textContent;
+  btn.textContent = 'Saving...';
   try {
-    await api('/api/settings', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(s) });
+    const res = await api('/api/settings', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(s) });
+    if (res.error) throw new Error(res.error);
+    updateModelInfo();
     showToast('Settings saved. Restart server for context/gpu/thread changes.', 'success');
-  } catch (e) { showToast('Failed to save settings', 'error'); }
+  } catch (e) { showToast(e.message || 'Failed to save settings', 'error'); }
+  finally { btn.disabled = false; btn.textContent = original; }
 }
 
 function updateLatency() {
