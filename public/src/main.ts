@@ -347,6 +347,48 @@ async function init(): Promise<void> {
     }
   });
 
+  // Code block actions (event delegation)
+  el.chatMessages.addEventListener('click', (e: Event) => {
+    const target = e.target as HTMLElement;
+    const btn = target.closest('.code-block-btn');
+    if (!btn) return;
+
+    const codeBlock = btn.closest('.code-block');
+    if (!codeBlock) return;
+
+    const rawTextarea = codeBlock.querySelector('.code-block-raw') as HTMLTextAreaElement;
+    const rawCode = rawTextarea?.value || '';
+
+    if (btn.classList.contains('code-block-copy')) {
+      navigator.clipboard.writeText(rawCode).then(() => {
+        const span = btn.querySelector('span');
+        if (span) {
+          span.textContent = 'Copied!';
+          setTimeout(() => { span.textContent = 'Copy'; }, 2000);
+        }
+      });
+    } else if (btn.classList.contains('code-block-download')) {
+      const lang = codeBlock.getAttribute('data-lang') || 'txt';
+      const ext = lang === 'plaintext' ? 'txt' : lang;
+      const blob = new Blob([rawCode], { type: 'text/plain' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `code.${ext}`;
+      a.click();
+      URL.revokeObjectURL(url);
+    } else if (btn.classList.contains('code-block-wrap')) {
+      codeBlock.classList.toggle('wrapped');
+      btn.classList.toggle('active');
+    } else if (btn.classList.contains('code-block-collapse')) {
+      codeBlock.classList.toggle('collapsed');
+      const span = btn.querySelector('span');
+      if (span) {
+        span.textContent = codeBlock.classList.contains('collapsed') ? 'Expand' : 'Collapse';
+      }
+    }
+  });
+
   el.chatMessages.addEventListener('scroll', () => {
     const threshold = 100;
     const atBottom =

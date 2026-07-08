@@ -197,7 +197,34 @@ export function formatMd(text: string, highlight: HighlightFn = mainThreadHighli
   for (let i = 0; i < codeStore.length; i++) {
     const { lang, code } = codeStore[i];
     const inner = highlight(code, lang);
-    result = result.split('@@CODE' + i + '@@').join(`<pre><code class="lang-${lang}">${inner}</code></pre>`);
+    const langLabel = lang === 'plaintext' ? 'Code' : lang;
+    const escapedCode = escapeHtml(code);
+    result = result.split('@@CODE' + i + '@@').join(`
+<div class="code-block" data-lang="${lang}">
+  <div class="code-block-header">
+    <span class="code-block-lang">${langLabel}</span>
+    <div class="code-block-actions">
+      <button class="code-block-btn code-block-copy" title="Copy code" aria-label="Copy code">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+        <span>Copy</span>
+      </button>
+      <button class="code-block-btn code-block-download" title="Download file" aria-label="Download code as file">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+        <span>Download</span>
+      </button>
+      <button class="code-block-btn code-block-wrap" title="Toggle word wrap" aria-label="Toggle word wrap">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18M3 12h15a3 3 0 1 1 0 6h-4M3 18h10a3 3 0 1 0 0-6h-3"/></svg>
+        <span>Wrap</span>
+      </button>
+      <button class="code-block-btn code-block-collapse" title="Collapse code" aria-label="Collapse code block">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="4 14 10 14 10 20"/><polyline points="20 10 14 10 14 4"/><line x1="14" y1="10" x2="21" y2="3"/><line x1="3" y1="21" x2="10" y2="14"/></svg>
+        <span>Collapse</span>
+      </button>
+    </div>
+  </div>
+  <pre class="code-block-pre"><code class="lang-${lang}">${inner}</code></pre>
+  <textarea class="code-block-raw" style="display:none">${escapedCode}</textarea>
+</div>`);
   }
 
   for (let i = 0; i < mathStore.length; i++) {

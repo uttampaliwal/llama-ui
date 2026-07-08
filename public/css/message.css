@@ -152,6 +152,92 @@
 
 .message-content code:not(pre code) {
   background: var(--bg-tertiary);
+
+/* Code Block */
+.code-block {
+  margin: 10px 0;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  overflow: hidden;
+  background: var(--bg-primary);
+}
+
+.code-block-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 12px;
+  background: var(--bg-tertiary);
+  border-bottom: 1px solid var(--border);
+}
+
+.code-block-lang {
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--text-secondary);
+  font-family: 'JetBrains Mono', 'Fira Code', 'Cascadia Code', monospace;
+}
+
+.code-block-actions {
+  display: flex;
+  gap: 4px;
+}
+
+.code-block-btn {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 8px;
+  font-size: 11px;
+  font-family: inherit;
+  color: var(--text-muted);
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all var(--transition);
+}
+
+.code-block-btn:hover {
+  color: var(--text-primary);
+  background: var(--bg-hover);
+  border-color: var(--border);
+}
+
+.code-block-btn.active {
+  color: var(--accent);
+  background: var(--accent-dim);
+}
+
+.code-block-btn svg {
+  width: 12px;
+  height: 12px;
+}
+
+.code-block-pre {
+  margin: 0;
+  padding: 14px 16px;
+  background: var(--bg-primary);
+  overflow-x: auto;
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+.code-block-pre code {
+  font-family: 'JetBrains Mono', 'Fira Code', 'Cascadia Code', monospace;
+  white-space: pre;
+  word-spacing: normal;
+  word-break: normal;
+}
+
+.code-block.wrapped .code-block-pre code {
+  white-space: pre-wrap;
+  word-break: break-all;
+}
+
+.code-block.collapsed .code-block-pre {
+  display: none;
+}
   border: 1px solid var(--border);
   padding: 1px 6px;
   border-radius: 4px;
