@@ -66,7 +66,7 @@ export async function applySettings(): Promise<void> {
     });
     if (res.error) throw new Error(res.error);
     updateModelInfo();
-    showToast('Settings saved. Restart server for context/gpu/thread changes.', 'success');
+    showToast('Settings saved. Select a model to apply changes.', 'success');
   } catch (e) {
     showToast((e as Error).message || 'Failed to save settings', 'error');
   } finally {

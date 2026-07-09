@@ -1,12 +1,12 @@
 {
   "port": 8080,
-  "contextSize": 4096,
+  "contextSize": 8192,
   "threads": 4,
   "gpuLayers": 99,
   "temperature": 0.7,
   "topP": 0.9,
   "topK": 40,
   "repeatPenalty": 1.1,
-  "maxTokens": 4096,
+  "maxTokens": 5000,
   "systemPrompt": "You are a helpful assistant."
 }

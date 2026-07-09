@@ -1,5 +1,6 @@
 import { api } from './api.js';
 import { el, $ } from './utils.js';
+import { showToast } from './toast.js';
 import type { ModelInfo } from './types.js';
 import { AppState } from './state.js';
 import { logError } from './logger.js';
@@ -8,92 +9,90 @@ import { logError } from './logger.js';
 
 function capClass(cap: string): string {
   const lower = cap.toLowerCase();
-  if (lower.includes('vision')) return 'vision';
-  if (lower.includes('tool') || lower.includes('function')) return 'tool';
-  return '';
+  if (lower === 'vision') return 'cap-vision';
+  if (lower === 'tools') return 'cap-tools';
+  if (lower === 'embedding') return 'cap-embed';
+  return 'cap-text';
 }
 
-// ---- Render -----------------------------------------------------------------
+function esc(s: string): string {
+  const d = document.createElement('div');
+  d.textContent = s;
+  return d.innerHTML;
+}
+
+// ---- Public -----------------------------------------------------------------
 
 export async function loadModels(): Promise<void> {
   const list = $('modelList') as HTMLElement;
   if (!list) return;
+  list.innerHTML = '<div class="model-loading"><span class="loading-dots"><span></span><span></span><span></span></span></div>';
 
   try {
-    const { models } = await api<{ models: ModelInfo[] }>('/api/models');
+    const data = await api<{ models: ModelInfo[] }>('/api/models');
+    const models = data.models || [];
     AppState.models = {};
+    el.modelSelect.innerHTML = '';
 
-    // Populate hidden select for server.ts compatibility
-    el.modelSelect.innerHTML = '<option value="">Select a model...</option>';
-
-    if (!models.length) {
-      list.innerHTML = '<div class="model-empty">No models found</div>';
-      return;
-    }
-
-    list.innerHTML = '';
-    const selectedPath = el.modelSelect?.value || '';
-
-    models.forEach((m) => {
+    // Group by folder
+    const groups = new Map<string, ModelInfo[]>();
+    for (const m of models) {
+      const folder = m.folder || 'Root';
+      if (!groups.has(folder)) groups.set(folder, []);
+      groups.get(folder)!.push(m);
       AppState.models[m.path] = m;
 
-      // Add option to hidden select
       const opt = document.createElement('option');
       opt.value = m.path;
       opt.textContent = m.name;
       el.modelSelect.appendChild(opt);
+    }
 
-      const card = document.createElement('div');
-      card.className = 'model-card';
-      card.dataset.path = m.path;
-      card.setAttribute('role', 'option');
-      card.setAttribute('tabindex', '0');
-      card.setAttribute('aria-label', `${m.name}, ${m.sizeFormatted}`);
+    list.innerHTML = '';
+    for (const [folder, items] of groups) {
+      const groupEl = document.createElement('div');
+      groupEl.className = 'model-group';
+      groupEl.innerHTML = `<div class="model-group-title">${esc(folder)}</div>`;
 
-      if (m.path === selectedPath) card.classList.add('selected');
+      for (const m of items) {
+        const caps = m.capabilities && m.capabilities.length
+          ? m.capabilities.map((c) => `<span class="model-cap-badge ${capClass(c)}">${esc(c)}</span>`).join('') : '';
 
-      // Capabilities badges
-      const capsHtml = (m.capabilities || [])
-        .map((c) => `<span class="model-cap-badge ${capClass(c)}">${esc(c)}</span>`)
-        .join('');
+        const card = document.createElement('div');
+        card.className = 'model-card';
+        card.dataset.path = m.path;
+        card.tabIndex = 0;
+        card.setAttribute('role', 'button');
+        card.setAttribute('aria-label', `Load ${m.name}`);
+        card.innerHTML = `
+          <div class="model-card-header">
+            <span class="model-card-name">${esc(m.name)}</span>
+          </div>
+          <div class="model-card-meta">
+            <span class="model-card-size">${esc(m.sizeFormatted)}</span>
+            ${caps ? `<span class="model-card-caps">${caps}</span>` : ''}
+          </div>`;
 
-      card.innerHTML = `
-        <div class="model-card-top">
-          <span class="model-status-dot available" aria-hidden="true"></span>
-          <span class="model-card-name" title="${esc(m.name)}">${esc(m.name)}</span>
-          <div class="model-card-check" aria-hidden="true"></div>
-        </div>
-        ${capsHtml ? `<div class="model-card-caps">${capsHtml}</div>` : ''}
-        <div class="model-card-meta">
-          <span class="model-meta-item model-card-size">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/></svg>
-            ${esc(m.sizeFormatted)}
-          </span>
-          ${m.folder ? `<span class="model-meta-item" title="${esc(m.folder)}">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>
-            ${esc(m.folder.split('/').pop() || m.folder)}
-          </span>` : ''}
-        </div>
-      `;
+        card.addEventListener('click', () => selectModel(m.path));
+        card.addEventListener('keydown', (e: Event) => {
+          if ((e as KeyboardEvent).key === 'Enter' || (e as KeyboardEvent).key === ' ') {
+            e.preventDefault();
+            selectModel(m.path);
+          }
+        });
 
-      card.addEventListener('click', () => selectModel(m.path));
-      card.addEventListener('keydown', (e: Event) => {
-        if ((e as KeyboardEvent).key === 'Enter' || (e as KeyboardEvent).key === ' ') {
-          e.preventDefault();
-          selectModel(m.path);
-        }
-      });
-
-      list.appendChild(card);
-    });
+        groupEl.appendChild(card);
+      }
+      list.appendChild(groupEl);
+    }
   } catch (e) {
     logError('loadModels', e);
     list.innerHTML = '<div class="model-empty">Failed to load models</div>';
   }
 }
 
-function selectModel(path: string): void {
-  // Update hidden select for compatibility with server.ts etc.
+async function selectModel(path: string): Promise<void> {
+  // Update hidden select for compatibility
   el.modelSelect.value = path;
 
   // Update card UI
@@ -106,6 +105,14 @@ function selectModel(path: string): void {
   }
 
   updateModelInfo();
+
+  // Auto-start/restart server with this model
+  try {
+    const { ensureServerRunning } = await import('./server.js');
+    await ensureServerRunning(path);
+  } catch (e) {
+    showToast('Failed to load model: ' + (e as Error).message, 'error');
+  }
 }
 
 export function updateModelInfo(): void {
@@ -126,10 +133,4 @@ export function updateModelInfo(): void {
   // Update status bar
   const contextSize = parseInt($<HTMLInputElement>('contextSize').value) || 0;
   import('./status.js').then(mod => mod.setModelInfo(m.name, contextSize));
-}
-
-function esc(s: string): string {
-  const d = document.createElement('div');
-  d.textContent = s;
-  return d.innerHTML;
 }

@@ -24,7 +24,7 @@ import {
   loadConversations,
   setupVirtualScroll,
 } from './conversation.js';
-import { checkStatus, startServer, stopServer } from './server.js';
+import { checkStatus, stopServer } from './server.js';
 import { renderSidebar, setupSidebarListeners } from './sidebar.js';
 import { initMobileGestures } from './mobile.js';
 import { initStatusBar } from './status.js';
@@ -186,7 +186,6 @@ async function init(): Promise<void> {
     el.userInput.style.height = el.userInput.scrollHeight + 'px';
   });
 
-  el.startBtn.addEventListener('click', startServer);
   el.stopBtn.addEventListener('click', stopServer);
 
   el.refreshModelsBtn.addEventListener('click', loadModels);

@@ -67,7 +67,7 @@ export async function sendMessage(): Promise<void> {
     const status = await api<StatusResponse>('/api/status');
     if (!status.running) {
       resetRegenerateMode();
-      showToast('Server is not running. Start the server first.', 'error');
+      showToast('Server is not running. Select a model to start.', 'error');
       return;
     }
   } catch (e) {

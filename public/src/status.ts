@@ -109,7 +109,7 @@ let statusInterval: ReturnType<typeof setInterval> | null = null;
 export function startStatusUpdates(): void {
   if (statusInterval) return;
   fetchSystemStatus();
-  statusInterval = setInterval(fetchSystemStatus, 10000); // Update every 10 seconds
+  statusInterval = setInterval(fetchSystemStatus, 3000); // Update every 3 seconds
 }
 
 export function stopStatusUpdates(): void {

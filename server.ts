@@ -39,6 +39,7 @@ let llamaProcess: ChildProcess | null = null;
 let currentModel: string | null = null;
 let isStarting = false;
 let startPromise: Promise<{ success: boolean; port: number }> | null = null;
+let stopPromise: Promise<void> | null = null;
 
 function loadSettings(): void {
   try {
@@ -262,10 +263,18 @@ function killLlamaProcess(): Promise<void> {
 }
 
 async function startLlamaServer(modelPath: string): Promise<{ success: boolean; port: number }> {
-  if (isStarting) {
-    if (startPromise) return startPromise;
-    throw new Error('Server start already in progress');
+  // If a stop is in progress, wait for it
+  if (stopPromise) await stopPromise;
+
+  // Kill any existing process directly (don't rely on isStarting flag)
+  if (llamaProcess) {
+    await killLlamaProcess();
   }
+
+  // Reset state cleanly
+  isStarting = false;
+  startPromise = null;
+
   isStarting = true;
 
   startPromise = (async () => {
@@ -273,10 +282,6 @@ async function startLlamaServer(modelPath: string): Promise<{ success: boolean; 
     let serverPath: string;
 
     try {
-      if (llamaProcess) {
-        await killLlamaProcess();
-      }
-
       serverPath = path.join(LLAMA_CPP_PATH, 'llama-server.exe');
       if (!fs.existsSync(serverPath)) {
         throw new Error('llama-server.exe not found at: ' + serverPath);
@@ -365,8 +370,11 @@ async function startLlamaServer(modelPath: string): Promise<{ success: boolean; 
       proc.on('exit', (code) => {
         console.log('Server exited:', code);
         cleanup();
-        llamaProcess = null;
-        currentModel = null;
+        // Only clear if this is still the current process (not a stale old process)
+        if (llamaProcess === proc) {
+          llamaProcess = null;
+          currentModel = null;
+        }
         if (!started) {
           const detail = stderrOutput.trim().split('\n').slice(-10).join('\n');
           reject(new Error('Server exited with code ' + code + (detail ? '\n' + detail : '')));
@@ -395,10 +403,17 @@ async function startLlamaServer(modelPath: string): Promise<{ success: boolean; 
 }
 
 async function stopLlamaServer(): Promise<{ success: true }> {
-  if (llamaProcess) {
-    await killLlamaProcess();
-    currentModel = null;
-  }
+  const p = (async () => {
+    if (llamaProcess) {
+      await killLlamaProcess();
+      currentModel = null;
+    }
+    isStarting = false;
+    startPromise = null;
+  })();
+  stopPromise = p;
+  await p;
+  stopPromise = null;
   return { success: true };
 }
 
@@ -417,14 +432,15 @@ app.get('/api/status', (_req: express.Request, res: express.Response) => {
 });
 
 app.get('/api/system', (_req: express.Request, res: express.Response) => {
-  const mem = process.memoryUsage();
+  const os = require('os');
+  const totalMem = os.totalmem();
+  const freeMem = os.freemem();
+  const usedMem = totalMem - freeMem;
   res.json({
     gpu: getGpuInfo(),
     ram: {
-      used: mem.heapUsed,
-      total: mem.heapTotal,
-      systemTotal: require('os').totalmem(),
-      systemFree: require('os').freemem()
+      used: usedMem,
+      total: totalMem
     }
   });
 });

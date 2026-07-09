@@ -1,4 +1,4 @@
-import { el, showWelcome, downloadFile } from './utils.js';
+import { el, showWelcome, hideWelcome, downloadFile } from './utils.js';
 import { showToast } from './toast.js';
 import { extractThinking, formatMd, escapeHtml } from './markdown.js';
 import { renderMath } from './latex.js';
@@ -327,6 +327,7 @@ export function newConversation(): Conversation {
   el.sendBtn.querySelector('.btn-label')!.textContent = 'Send';
   el.userInput.value = '';
   el.restartBtn.classList.add('hidden');
+  showWelcome();
   return conv;
 }
 
@@ -348,6 +349,12 @@ export function renderConversation(conv: Conversation): void {
   mountWindow();
   el.chatMessages.scrollTop = el.chatMessages.scrollHeight;
   mountWindow();
+
+  if (conv.messages.length === 0) {
+    showWelcome();
+  } else {
+    hideWelcome();
+  }
 }
 
 export function renderMessage(msg: ChatMessage, scroll = true, streaming = false): void {

@@ -6,7 +6,6 @@ interface Els {
   modelSelect: HTMLSelectElement;
   modelInfo: HTMLElement;
   modelBadge: HTMLElement;
-  startBtn: HTMLButtonElement;
   stopBtn: HTMLButtonElement;
   statusIndicator: HTMLElement;
   welcomeScreen: HTMLElement;
@@ -49,7 +48,6 @@ export const el: Els = {
   modelSelect: $('modelSelect') as HTMLSelectElement,
   modelInfo: $('modelInfo'),
   modelBadge: $('modelBadge'),
-  startBtn: $('startBtn') as HTMLButtonElement,
   stopBtn: $('stopBtn') as HTMLButtonElement,
   statusIndicator: $('statusIndicator'),
   welcomeScreen: $('welcomeScreen'),
