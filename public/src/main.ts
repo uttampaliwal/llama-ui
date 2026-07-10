@@ -253,15 +253,19 @@ async function init(): Promise<void> {
 
   el.menuBtn?.addEventListener('click', () => {
     el.sidebar.classList.toggle('open');
+    el.sidebar.classList.remove('collapsed');
     if (el.sidebarOverlay) el.sidebarOverlay.classList.toggle('open');
   });
 
-  el.collapseBtn?.addEventListener('click', closeSidebar);
+  el.collapseBtn?.addEventListener('click', () => {
+    el.sidebar.classList.toggle('collapsed');
+    el.sidebar.classList.remove('open');
+    if (el.sidebarOverlay) el.sidebarOverlay.classList.remove('open');
+  });
   el.sidebarOverlay?.addEventListener('click', closeSidebar);
 
   el.sidebarExpandBtn?.addEventListener('click', () => {
-    el.sidebar.classList.add('open');
-    if (el.sidebarOverlay) el.sidebarOverlay.classList.add('open');
+    el.sidebar.classList.remove('collapsed');
   });
 
   el.scrollBottomBtn?.addEventListener('click', () => {
