@@ -5,8 +5,28 @@ on:
     tags: ['v*']
 
 jobs:
-  release:
+  changelog:
     runs-on: ubuntu-latest
+    outputs:
+      changelog: ${{ steps.git-cliff.outputs.content }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - id: git-cliff
+        uses: orhun/git-cliff-action@v3
+        with:
+          config: cliff.toml
+          args: --latest
+        env:
+          OUTPUT: CHANGELOG.md
+
+  build:
+    needs: changelog
+    strategy:
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+    runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -16,10 +36,28 @@ jobs:
       - run: npm ci
       - run: npm run build
       - run: npm test
+      - uses: actions/upload-artifact@v4
+        with:
+          name: modelverse-release-${{ matrix.os }}
+          path: |
+            server.js
+            public/
+            package.json
+            node_modules/
+
+  release:
+    needs: [changelog, build]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: modelverse-release-*
+          merge-multiple: true
       - uses: softprops/action-gh-release@v2
         with:
+          body: ${{ needs.changelog.outputs.changelog }}
           files: |
             server.js
-            src/**/*.js
             public/
             package.json
