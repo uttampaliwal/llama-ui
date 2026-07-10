@@ -16,6 +16,7 @@ interface SearchResult {
 let selected_index = -1;
 let results: SearchResult[] = [];
 let activeFilter = 'all';
+let initialized = false;
 
 function init(): void {
   const dialog = $('searchDialog');
@@ -24,26 +25,22 @@ function init(): void {
 
   if (!dialog || !input || !resultsContainer) return;
 
-  // Close on overlay click
   dialog.addEventListener('click', (e) => {
     if (e.target === dialog) closeSearch();
   });
 
-  // Close on Escape
   document.addEventListener('keydown', (e) => {
     if (e.key === 'Escape' && dialog.style.display !== 'none') {
       closeSearch();
     }
   });
 
-  // Input handler
   let searchTimeout: ReturnType<typeof setTimeout> | null = null;
   input.addEventListener('input', () => {
     if (searchTimeout) clearTimeout(searchTimeout);
     searchTimeout = setTimeout(() => performSearch(input.value), 150);
   });
 
-  // Keyboard navigation
   input.addEventListener('keydown', (e) => {
     if (e.key === 'ArrowDown') {
       e.preventDefault();
@@ -57,7 +54,6 @@ function init(): void {
     }
   });
 
-  // Filter buttons
   document.querySelectorAll('.search-filter').forEach((btn) => {
     btn.addEventListener('click', () => {
       document.querySelectorAll('.search-filter').forEach((b) => b.classList.remove('active'));
@@ -66,17 +62,25 @@ function init(): void {
       performSearch(input.value);
     });
   });
-
-  // Global shortcut: Ctrl+K or Cmd+K
-  document.addEventListener('keydown', (e) => {
-    if ((e.ctrlKey || e.metaKey) && e.key === 'k') {
-      e.preventDefault();
-      openSearch();
-    }
-  });
 }
 
-function openSearch(): void {
+function injectCSS(): void {
+  if (document.querySelector('link[href*="search.css"]')) return;
+  const link = document.createElement('link');
+  link.rel = 'stylesheet';
+  link.href = 'css/search.css';
+  document.head.appendChild(link);
+}
+
+export function initSearch(): void {
+  if (initialized) return;
+  injectCSS();
+  init();
+  initialized = true;
+}
+
+export function openSearch(): void {
+  initSearch();
   const dialog = $('searchDialog');
   const input = $('searchInput') as HTMLInputElement;
   if (!dialog || !input) return;
@@ -89,7 +93,7 @@ function openSearch(): void {
   renderResults();
 }
 
-function closeSearch(): void {
+export function closeSearch(): void {
   const dialog = $('searchDialog');
   if (dialog) {
     dialog.style.display = 'none';
@@ -108,7 +112,6 @@ function performSearch(query: string): void {
   const convs = getConversations();
 
   for (const conv of convs) {
-    // Search titles
     if (activeFilter === 'all' || activeFilter === 'titles') {
       if (conv.title.toLowerCase().includes(q)) {
         results.push({
@@ -124,7 +127,6 @@ function performSearch(query: string): void {
       }
     }
 
-    // Search messages
     for (const msg of conv.messages) {
       const text = textOf(msg.content);
       const lowerText = text.toLowerCase();
@@ -146,7 +148,6 @@ function performSearch(query: string): void {
         }
       }
 
-      // Search code blocks
       if (activeFilter === 'all' || activeFilter === 'code') {
         const codeMatches = text.match(/```[\s\S]*?```/g);
         if (codeMatches) {
@@ -172,29 +173,21 @@ function performSearch(query: string): void {
     }
   }
 
-  // Sort by date (newest first)
   results.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
-
-  // Limit results
   results = results.slice(0, 50);
-
   selected_index = results.length > 0 ? 0 : -1;
   renderResults();
 }
 
 function getPreview(text: string, matchStart: number, matchLength: number): string {
   const contextLength = 40;
-
   let start = Math.max(0, matchStart - contextLength);
   let end = Math.min(text.length, matchStart + matchLength + contextLength);
-
   if (start > 0) start = text.indexOf(' ', start) + 1 || start;
   if (end < text.length) end = text.lastIndexOf(' ', end) || end;
-
   let preview = text.slice(start, end).trim();
   if (start > 0) preview = '...' + preview;
   if (end < text.length) preview = preview + '...';
-
   return preview;
 }
 
@@ -232,7 +225,6 @@ function renderResults(): void {
     )
     .join('');
 
-  // Click handlers
   container.querySelectorAll('.search-result-item').forEach((item) => {
     item.addEventListener('click', () => {
       const index = parseInt((item as HTMLElement).dataset.index || '0');
@@ -244,14 +236,10 @@ function renderResults(): void {
 
 function navigateResults(direction: number): void {
   if (results.length === 0) return;
-
   selected_index += direction;
   if (selected_index < 0) selected_index = results.length - 1;
   if (selected_index >= results.length) selected_index = 0;
-
   renderResults();
-
-  // Scroll into view
   const container = $('searchResults');
   const selected = container?.querySelector('.search-result-item.selected');
   if (selected) {
@@ -261,7 +249,6 @@ function navigateResults(direction: number): void {
 
 function openSelectedResult(): void {
   if (selected_index < 0 || selected_index >= results.length) return;
-
   const result = results[selected_index];
   selectConversation(result.conversationId);
   closeSearch();
@@ -284,12 +271,3 @@ function escapeHtml(s: string): string {
   d.textContent = s;
   return d.innerHTML;
 }
-
-// Initialize on DOM ready
-if (document.readyState === 'loading') {
-  document.addEventListener('DOMContentLoaded', init);
-} else {
-  init();
-}
-
-export { openSearch, closeSearch };

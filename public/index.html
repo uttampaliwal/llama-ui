@@ -10,22 +10,19 @@
   <style>
     .sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
   </style>
-  <link rel="stylesheet" href="css/variables.css?v=20260708e">
-  <link rel="stylesheet" href="css/base.css?v=20260708e">
-  <link rel="stylesheet" href="css/button.css?v=20260708e">
-  <link rel="stylesheet" href="css/sidebar.css?v=20260708e">
-  <link rel="stylesheet" href="css/chat.css?v=20260708e">
-  <link rel="stylesheet" href="css/message.css?v=20260708e">
-  <link rel="stylesheet" href="css/input.css?v=20260708e">
-  <link rel="stylesheet" href="css/modal.css?v=20260708e">
-  <link rel="stylesheet" href="css/settings.css?v=20260708e">
-  <link rel="stylesheet" href="css/toast.css?v=20260708e">
-  <link rel="stylesheet" href="css/search.css?v=20260708e">
-  <link rel="stylesheet" href="css/status-bar.css?v=20260708e">
-  <link rel="stylesheet" href="css/polish.css?v=20260708e">
-  <link rel="stylesheet" href="css/image-viewer.css?v=20260708e">
-  <link rel="stylesheet" href="css/responsive.css?v=20260708e">
-  <link rel="stylesheet" href="/vendor/highlight/styles/github-dark.min.css">
+  <link rel="stylesheet" href="css/variables.css?v=20260709a">
+  <link rel="stylesheet" href="css/base.css?v=20260709a">
+  <link rel="stylesheet" href="css/button.css?v=20260709a">
+  <link rel="stylesheet" href="css/sidebar.css?v=20260709a">
+  <link rel="stylesheet" href="css/chat.css?v=20260709a">
+  <link rel="stylesheet" href="css/message.css?v=20260709a">
+  <link rel="stylesheet" href="css/input.css?v=20260709a">
+  <link rel="stylesheet" href="css/modal.css?v=20260709a">
+  <link rel="stylesheet" href="css/settings.css?v=20260709a">
+  <link rel="stylesheet" href="css/toast.css?v=20260709a">
+  <link rel="stylesheet" href="css/status-bar.css?v=20260709a">
+  <link rel="stylesheet" href="css/polish.css?v=20260709a">
+  <link rel="stylesheet" href="css/responsive.css?v=20260709a">
 </head>
 <body>
   <div class="app">
@@ -547,27 +544,6 @@
 
   <div class="toast-container" id="toastContainer" aria-live="polite" aria-atomic="false"></div>
 
-  <script>
-    window.MathJax = {
-      loader: { paths: { mathjax: '/vendor/mathjax/es5' } },
-      tex: {
-        inlineMath: [['\\(', '\\)'], ['$', '$']],
-        displayMath: [['\\[', '\\]'], ['$$', '$$']]
-      },
-      options: { skipHtmlTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code'] },
-      startup: {
-        ready() {
-          MathJax.startup.defaultReady();
-          MathJax.startup.promise.then(() => {
-            document.querySelectorAll('.message').forEach(el => {
-              try { MathJax.typesetPromise([el]); } catch (e) {}
-            });
-          });
-        }
-      }
-    };
-  </script>
-
-  <script type="module" src="src/main.js?v=20260708e"></script>
+  <script type="module" src="src/main.js?v=20260709a"></script>
 </body>
 </html>

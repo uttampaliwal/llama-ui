@@ -30,7 +30,7 @@ import { renderSidebar, setupSidebarListeners } from './sidebar.js';
 import { initMobileGestures } from './mobile.js';
 import { initStatusBar } from './status.js';
 import { textOf, type ExportFormat } from './types.js';
-import { logError, logInfo } from './logger.js';
+import { logError } from './logger.js';
 
 function getGreeting(): string {
   const h = new Date().getHours();
@@ -147,14 +147,7 @@ async function init(): Promise<void> {
     });
   }
 
-  // Background warm-up: preload highlight.js so the first message renders fast
-  // @ts-ignore — runtime URL path resolved by the static server
-  import('/vendor/highlight/highlight.esm.js')
-    .then((m) => {
-      (window as any).hljs = m.default;
-      logInfo('init', 'highlight.js warmed up');
-    })
-    .catch((e) => logError('init:highlight warmup', e));
+  // Lazy: highlight.js loaded on first message render via formatter.ts
 
   // Slider live value display
   ['temperature', 'topP', 'topK', 'repeatPenalty'].forEach((id) => {
@@ -262,6 +255,11 @@ async function init(): Promise<void> {
   });
 
   document.addEventListener('keydown', (e) => {
+    if ((e.ctrlKey || e.metaKey) && e.key === 'k') {
+      e.preventDefault();
+      import('./search.js').then((m) => m.openSearch()).catch(() => {});
+      return;
+    }
     if (e.ctrlKey && e.shiftKey) {
       switch (e.key) {
         case 'C':
@@ -290,6 +288,15 @@ async function init(): Promise<void> {
 
   el.chatMessages.addEventListener('click', (e) => {
     const target = e.target as HTMLElement;
+
+    // Lazy load image viewer on image click
+    const img = target.closest('img') as HTMLImageElement | null;
+    if (img && (img.classList.contains('message-image') || img.classList.contains('user-attached-img'))) {
+      e.preventDefault();
+      import('./image-viewer.js').then((m) => m.openViewer(img.src, img.alt)).catch(() => {});
+      return;
+    }
+
     const btn = target.closest('.action-btn') as HTMLElement | null;
     const msgEl = target.closest('.message') as HTMLElement | null;
     if (!msgEl) return;

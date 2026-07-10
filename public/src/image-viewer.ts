@@ -14,6 +14,8 @@ const viewer = {
   currentSrc: '',
 };
 
+let initialized = false;
+
 function init(): void {
   viewer.overlay = $('imageViewer');
   viewer.img = $('imageViewerImg') as HTMLImageElement;
@@ -22,7 +24,6 @@ function init(): void {
 
   if (!viewer.overlay || !viewer.img || !viewer.container) return;
 
-  // Button handlers
   $('imageViewerZoomIn')?.addEventListener('click', () => setZoom(viewer.zoom * 1.25));
   $('imageViewerZoomOut')?.addEventListener('click', () => setZoom(viewer.zoom / 1.25));
   $('imageViewerReset')?.addEventListener('click', resetView);
@@ -30,12 +31,10 @@ function init(): void {
   $('imageViewerOpenOriginal')?.addEventListener('click', openOriginal);
   $('imageViewerClose')?.addEventListener('click', close);
 
-  // Close on overlay click
   viewer.overlay.addEventListener('click', (e) => {
     if (e.target === viewer.overlay) close();
   });
 
-  // Close on Escape
   document.addEventListener('keydown', (e) => {
     if (e.key === 'Escape' && viewer.overlay?.style.display !== 'none') {
       close();
@@ -45,14 +44,12 @@ function init(): void {
     if (e.key === '0') resetView();
   });
 
-  // Mouse wheel zoom
   viewer.container.addEventListener('wheel', (e) => {
     e.preventDefault();
     const delta = e.deltaY > 0 ? 0.9 : 1.1;
     setZoom(viewer.zoom * delta);
   }, { passive: false });
 
-  // Pan with mouse drag
   viewer.container.addEventListener('mousedown', (e) => {
     if (e.button !== 0) return;
     viewer.isDragging = true;
@@ -73,7 +70,6 @@ function init(): void {
     viewer.container?.classList.remove('dragging');
   });
 
-  // Touch support
   let lastTouchDist = 0;
   viewer.container.addEventListener('touchstart', (e) => {
     if (e.touches.length === 1) {
@@ -110,7 +106,6 @@ function init(): void {
     lastTouchDist = 0;
   });
 
-  // Double-click to reset
   viewer.container.addEventListener('dblclick', () => {
     if (viewer.zoom === 1) {
       setZoom(2);
@@ -118,15 +113,23 @@ function init(): void {
       resetView();
     }
   });
+}
 
-  // Listen for image clicks in messages
-  document.addEventListener('click', (e) => {
-    const target = e.target as HTMLElement;
-    if (target.tagName === 'IMG' && (target.classList.contains('message-image') || target.classList.contains('user-attached-img'))) {
-      e.preventDefault();
-      open((target as HTMLImageElement).src, target.getAttribute('alt') || '');
-    }
-  });
+function injectCSS(): void {
+  if (document.querySelector('link[href*="image-viewer.css"]')) return;
+  const link = document.createElement('link');
+  link.rel = 'stylesheet';
+  link.href = 'css/image-viewer.css';
+  document.head.appendChild(link);
+}
+
+export async function openViewer(src: string, alt: string): Promise<void> {
+  if (!initialized) {
+    injectCSS();
+    init();
+    initialized = true;
+  }
+  open(src, alt);
 }
 
 function open(src: string, alt: string): void {
@@ -140,10 +143,14 @@ function open(src: string, alt: string): void {
   resetView();
 }
 
-function close(): void {
+export function closeViewer(): void {
   if (!viewer.overlay) return;
   viewer.overlay.style.display = 'none';
   document.body.style.overflow = '';
+}
+
+function close(): void {
+  closeViewer();
 }
 
 function setZoom(z: number): void {
@@ -176,12 +183,3 @@ function openOriginal(): void {
   if (!viewer.currentSrc) return;
   window.open(viewer.currentSrc, '_blank');
 }
-
-// Initialize on DOM ready
-if (document.readyState === 'loading') {
-  document.addEventListener('DOMContentLoaded', init);
-} else {
-  init();
-}
-
-export { open, close };

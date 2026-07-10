@@ -1,9 +1,30 @@
 import { buildMessageHtml } from './markdown.js';
+import { logError } from './logger.js';
 
 let worker: Worker | null | undefined;
 const pending = new Map<number, (html: string) => void>();
 const cache = new Map<string, string>();
 let nextId = 1;
+
+let highlightInited = false;
+function ensureHighlight(): void {
+  if (highlightInited) return;
+  highlightInited = true;
+
+  // Inject highlight theme CSS
+  const link = document.createElement('link');
+  link.rel = 'stylesheet';
+  link.href = '/vendor/highlight/styles/github-dark.min.css';
+  document.head.appendChild(link);
+
+  // Warm up highlight.js on the main thread (for fallback)
+  // @ts-ignore — runtime URL path resolved by the static server
+  import('/vendor/highlight/highlight.esm.js')
+    .then((m) => {
+      (window as any).hljs = m.default;
+    })
+    .catch((e) => logError('highlight', e));
+}
 
 function getWorker(): Worker | null {
   if (worker !== undefined) return worker ?? null;
@@ -26,16 +47,14 @@ function getWorker(): Worker | null {
   return worker ?? null;
 }
 
-/**
- * Render a message's HTML (markdown + syntax highlighting) off the main thread.
- * Falls back to synchronous rendering if the worker is unavailable.
- */
 export function formatMessage(
   thinking: string,
   answer: string,
   timestamp?: number | string,
   thinkingDuration?: number,
 ): Promise<string> {
+  ensureHighlight();
+
   const key = `${thinking} ${answer} ${timestamp ?? ''} ${thinkingDuration ?? ''}`;
   const cached = cache.get(key);
   if (cached) return Promise.resolve(cached);
@@ -53,7 +72,6 @@ export function formatMessage(
       resolve(html);
     };
     pending.set(id, done);
-    // Safety net: if the worker never replies, render on the main thread.
     setTimeout(() => {
       if (pending.has(id)) {
         pending.delete(id);

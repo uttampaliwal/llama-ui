@@ -2,11 +2,23 @@ import { logError, logWarn } from './logger.js';
 
 let mathjaxLoading: Promise<void> | null = null;
 
+function setMathJaxConfig(): void {
+  (window as any).MathJax = {
+    loader: { paths: { mathjax: '/vendor/mathjax/es5' } },
+    tex: {
+      inlineMath: [['\\(', '\\)'], ['$', '$']],
+      displayMath: [['\\[', '\\]'], ['$$', '$$']],
+    },
+    options: { skipHtmlTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code'] },
+  };
+}
+
 function ensureMathJax(): Promise<void> {
   const w = window as unknown as { MathJax?: { typesetPromise?: (e?: Element[]) => Promise<void> } };
   if (w.MathJax && w.MathJax.typesetPromise) return Promise.resolve();
   if (mathjaxLoading) return mathjaxLoading;
   mathjaxLoading = new Promise<void>((resolve) => {
+    setMathJaxConfig();
     const s = document.createElement('script');
     s.src = '/vendor/mathjax/es5/tex-mml-chtml.js';
     s.id = 'MathJax-script';
@@ -18,7 +30,6 @@ function ensureMathJax(): Promise<void> {
       };
       check();
     };
-    // If MathJax fails to load, don't block rendering of the rest of the UI.
     s.onerror = () => {
       logWarn('MathJax', 'Failed to load vendor script, math rendering disabled');
       resolve();
