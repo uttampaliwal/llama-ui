@@ -177,6 +177,8 @@ export async function sendMessage(): Promise<void> {
 
   const payload = {
     messages: userMsgs,
+    maxTokens: parseInt($<HTMLInputElement>('maxTokens').value) || 4096,
+    contextSize: parseInt($<HTMLInputElement>('contextSize').value) || 8192,
   };
 
   chatState.abortController = new AbortController();

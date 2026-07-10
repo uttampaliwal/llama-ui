@@ -496,6 +496,21 @@ app.post('/api/settings', (req: express.Request, res: express.Response) => {
   }
 
   settings = { ...settings, ...(sanitized as Partial<ServerSettings>) };
+  // Propagate context/performance knobs into the local llama.cpp engine config
+  // so a model re-load (re-select) spawns with the chosen context size. These
+  // only take effect when the backend is (re)started, not on a running one.
+  const cfg = settings.engineConfigs || (settings.engineConfigs = {});
+  cfg.llamacpp = {
+    ...cfg.llamacpp,
+    contextSize: settings.contextSize,
+    gpuLayers: settings.gpuLayers,
+    threads: settings.threads,
+  };
+  try {
+    engines.configure('llamacpp', cfg.llamacpp);
+  } catch (e) {
+    log.error('llama.cpp configure error', e as Error);
+  }
   saveSettings();
   res.json({ success: true });
 });
@@ -682,7 +697,12 @@ app.delete('/api/queue/:id', (req: express.Request, res: express.Response) => {
 });
 
 app.post('/api/chat', (req: express.Request, res: express.Response) => {
-  const { messages } = req.body as { messages: ChatMessageDTO[] };
+  const body = req.body as {
+    messages: ChatMessageDTO[];
+    maxTokens?: number;
+    contextSize?: number;
+  };
+  const { messages } = body;
   const engine = engines.getActive();
 
   if (!engine.running) {
@@ -694,13 +714,19 @@ app.post('/api/chat', (req: express.Request, res: express.Response) => {
     hasSystem ? messages : [{ role: 'system', content: settings.systemPrompt }, ...messages],
   );
 
+  // Prefer per-request values from the UI so a generation uses the context
+  // size the user currently has set, falling back to saved server settings.
+  const reqMaxTokens = typeof body.maxTokens === 'number' ? body.maxTokens : settings.maxTokens;
+  const reqContextSize =
+    typeof body.contextSize === 'number' ? body.contextSize : settings.contextSize;
+
   const opts: GenerateOptions = {
     temperature: settings.temperature,
     topP: settings.topP,
     topK: settings.topK,
     repeatPenalty: settings.repeatPenalty,
-    maxTokens: settings.maxTokens,
-    contextSize: settings.contextSize,
+    maxTokens: reqMaxTokens,
+    contextSize: reqContextSize,
   };
 
   requestQueue.enqueue(allMessages, opts, res);
