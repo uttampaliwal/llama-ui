@@ -1,6 +1,6 @@
 {
   "name": "modelverse",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "description": "Modern Web UI for local LLM inference",
   "main": "server.js",
   "scripts": {
