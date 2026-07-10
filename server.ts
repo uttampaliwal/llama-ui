@@ -27,6 +27,12 @@ import {
   searchMetadata,
   filterMetadata,
 } from './src/model-metadata';
+import {
+  scanAllModels,
+  getScannerConfig,
+  updateScannerConfig,
+  getAvailableSources,
+} from './src/model-scanner';
 
 interface ServerSettings {
   port: number;
@@ -334,6 +340,29 @@ app.delete('/api/metadata/:id', (req: express.Request, res: express.Response) =>
     return res.status(404).json({ error: 'Model not found' });
   }
   res.json({ success: true });
+});
+
+// --- Model Scanner API ---
+
+app.get('/api/scanner/scan', (_req: express.Request, res: express.Response) => {
+  const models = scanAllModels();
+  res.json({ models, count: models.length });
+});
+
+app.get('/api/scanner/sources', (_req: express.Request, res: express.Response) => {
+  const sources = getAvailableSources();
+  res.json({ sources });
+});
+
+app.get('/api/scanner/config', (_req: express.Request, res: express.Response) => {
+  const config = getScannerConfig();
+  res.json({ config });
+});
+
+app.post('/api/scanner/config', (req: express.Request, res: express.Response) => {
+  const updates = req.body as Partial<import('./src/model-scanner').ScannerConfig>;
+  const config = updateScannerConfig(updates);
+  res.json({ success: true, config });
 });
 
 // --- Plugin API ---
