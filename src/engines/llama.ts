@@ -4,6 +4,7 @@ import fs from 'fs';
 import net from 'net';
 import { LLMEngine, type ModelInfo, type ChatMessage, type GenerateOptions, type GenerateResult, type HealthStatus, type EngineConfig } from './base';
 import { openaiStreamToGenerator } from './stream-utils';
+import { log } from '../logger';
 
 export interface LlamaCppConfig extends EngineConfig {
   binPath: string;
@@ -178,7 +179,7 @@ export class LlamaCppEngine extends LLMEngine {
         ];
         if (mmprojPath) args.push('--mmproj', mmprojPath);
 
-        console.log('[llama.cpp] Starting:', serverPath);
+        log.engine('Starting: ' + serverPath);
         const proc = spawn(serverPath, args, {
           stdio: ['pipe', 'pipe', 'pipe'],
           windowsHide: true,
@@ -202,7 +203,7 @@ export class LlamaCppEngine extends LLMEngine {
               if (proc.stdout) proc.stdout.on('data', (d) => process.stdout.write(d));
               if (proc.stderr) proc.stderr.on('data', (d) => process.stderr.write(d));
             } catch {}
-            console.log('[llama.cpp] Server ready');
+            log.engine('Server ready on port ' + usedPort);
             resolve({ success: true, port: usedPort });
           }
         };
@@ -312,7 +313,7 @@ export class LlamaCppEngine extends LLMEngine {
       };
       scanDir(this.engineConfig.modelsPath);
     } catch (e) {
-      console.error('[llama.cpp] Error scanning models:', (e as Error).message);
+      log.error('Error scanning models', e as Error);
     }
     return models;
   }

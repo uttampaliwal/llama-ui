@@ -10,6 +10,7 @@ import {
   type HookDefinition,
   type ToolResult,
 } from './base';
+import { log } from '../logger';
 
 interface PluginEntry {
   manifest: PluginManifest;
@@ -34,7 +35,7 @@ function savePluginSettings(settings: Record<string, { enabled: boolean; config:
   try {
     fs.writeFileSync(SETTINGS_FILE, JSON.stringify(settings, null, 2));
   } catch (e) {
-    console.error('[PluginManager] Failed to save settings:', (e as Error).message);
+    log.error('Failed to save settings', e as Error);
   }
 }
 
@@ -90,12 +91,12 @@ class PluginManager {
         this.settings[pluginId].config = { ...config, ...newConfig };
         savePluginSettings(this.settings);
       },
-      log: (msg) => console.log(`[${instance.manifest.name}] ${msg}`),
+      log: (msg) => log.server(`[${instance.manifest.name}] ${msg}`),
     };
 
     await instance.activate(ctx);
     this.plugins.set(pluginId, entry);
-    console.log(`[PluginManager] Activated: ${instance.manifest.name}`);
+    log.server('Activated: ' + instance.manifest.name);
   }
 
   async deactivate(pluginId: string): Promise<void> {
@@ -118,7 +119,7 @@ class PluginManager {
     this.settings[pluginId] = { enabled: false, config: this.settings[pluginId]?.config || {} };
     savePluginSettings(this.settings);
     this.plugins.delete(pluginId);
-    console.log(`[PluginManager] Deactivated: ${entry.manifest.name}`);
+    log.server('Deactivated: ' + entry.manifest.name);
   }
 
   async toggle(pluginId: string): Promise<boolean> {
@@ -137,7 +138,7 @@ class PluginManager {
         try {
           await this.activate(id);
         } catch (e) {
-          console.error(`[PluginManager] Failed to activate ${id}:`, (e as Error).message);
+          log.error('Failed to activate ' + id, e as Error);
         }
       }
     }

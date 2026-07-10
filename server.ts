@@ -34,6 +34,7 @@ import {
   updateScannerConfig,
   getAvailableSources,
 } from './src/model-scanner';
+import { log } from './src/logger';
 
 interface ServerSettings {
   port: number;
@@ -102,7 +103,7 @@ class RequestQueue {
         const e = this.entries[idx];
         if (e.status === 'queued') {
           this.entries.splice(idx, 1);
-          console.log('[QUEUE] Client disconnected, removed queued request', entry.id);
+                log.server('Client disconnected, removed queued request ' + entry.id);
         } else if (e.status === 'running') {
           // Don't remove running entry; the stream error handler will clean up
         }
@@ -112,7 +113,7 @@ class RequestQueue {
     if (isBusy) {
       const pos = this.entries.filter(e => e.status === 'queued').length;
       sendSSE(res, { queue: { status: 'queued', position: pos } });
-      console.log('[QUEUE] Request queued at position', pos, `(${entry.id})`);
+            log.server('Request queued at position ' + pos + ' (' + entry.id + ')');
     } else {
       this.currentId = entry.id;
       sendSSE(res, { queue: { status: 'running' } });
@@ -157,9 +158,9 @@ class RequestQueue {
         entry.res.write('data: [DONE]\n\n');
         entry.res.end();
         entry.status = 'completed';
-        console.log('[CHAT] Stream complete');
+        log.server('Stream complete');
       } catch (streamErr) {
-        console.error('[CHAT] Stream error:', (streamErr as Error).message);
+        log.error('Stream error', streamErr as Error);
         if (!entry.res.headersSent) {
           entry.res.status(500).json({ error: (streamErr as Error).message });
         } else {
@@ -175,7 +176,7 @@ class RequestQueue {
       this.entries = this.entries.filter(e => e.id !== entry.id);
       this.dequeueNext();
     } catch (e) {
-      console.error('[CHAT] Error:', (e as Error).message);
+            log.error('Chat generate error', e as Error);
       if (!entry.res.headersSent) {
         entry.res.status(500).json({ error: (e as Error).message });
       } else {
@@ -257,7 +258,7 @@ function loadSettings(): void {
       }
     }
   } catch (e) {
-    console.error('Error loading settings:', (e as Error).message);
+    log.error('Error loading settings', e as Error);
   }
 }
 
@@ -265,7 +266,7 @@ function saveSettings(): void {
   try {
     fs.writeFileSync(SETTINGS_FILE, JSON.stringify(settings, null, 2));
   } catch (e) {
-    console.error('Error saving settings:', (e as Error).message);
+    log.error('Error saving settings', e as Error);
   }
 }
 
@@ -544,7 +545,7 @@ plugins.register(RAGPlugin);
 plugins.register(PythonPlugin);
 plugins.register(VisionPlugin);
 
-plugins.activateAll().catch((e) => console.error('[Plugins] Activation error:', e.message));
+plugins.activateAll().catch((e) => log.error('Plugins activation error', e));
 
 app.get('/api/plugins', (_req: express.Request, res: express.Response) => {
   res.json({ plugins: plugins.listAvailable() });
@@ -624,9 +625,9 @@ const server = app.listen(PORT, () => {
 
 server.on('error', (err) => {
   if ((err as NodeJS.ErrnoException).code === 'EADDRINUSE') {
-    console.error(`[ERROR] Port ${PORT} is already in use. Another instance may be running.`);
+    log.error(`Port ${PORT} is already in use. Another instance may be running.`);
   } else {
-    console.error('[ERROR] Server failed to start:', (err as Error).message);
+    log.error('Server failed to start', err as Error);
   }
   process.exit(1);
 });

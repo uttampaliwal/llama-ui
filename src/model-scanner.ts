@@ -3,6 +3,7 @@ import path from 'path';
 import os from 'os';
 import { execSync } from 'child_process';
 import { getOrCreateMetadata, type ModelMetadata } from './model-metadata';
+import { log } from './logger';
 
 export interface ScannedModel {
   id: string;
@@ -376,7 +377,7 @@ export function scanAllModels(config?: ScannerConfig): ScannedModel[] {
       try {
         allModels.push(...scanner());
       } catch (e) {
-        console.error(`[Scanner] Error scanning ${source}:`, (e as Error).message);
+        log.error('Error scanning ' + source, e as Error);
       }
     }
   }

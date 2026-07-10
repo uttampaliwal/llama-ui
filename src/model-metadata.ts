@@ -1,5 +1,6 @@
 import fs from 'fs';
 import path from 'path';
+import { log } from './logger';
 
 export interface ModelMetadata {
   id: string;
@@ -58,7 +59,7 @@ function saveStore(): void {
     const data = Array.from(metadataStore.values());
     fs.writeFileSync(METADATA_FILE, JSON.stringify(data, null, 2));
   } catch (e) {
-    console.error('[ModelMetadata] Failed to save:', (e as Error).message);
+    log.error('Failed to save metadata', e as Error);
   }
 }
 
