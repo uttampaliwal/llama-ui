@@ -485,6 +485,7 @@ app.post('/api/settings', (req: express.Request, res: express.Response) => {
     'topK',
     'repeatPenalty',
     'maxTokens',
+    'contextSize',
   ];
   for (const f of numFields) {
     const v = body[f];
@@ -699,6 +700,7 @@ app.post('/api/chat', (req: express.Request, res: express.Response) => {
     topK: settings.topK,
     repeatPenalty: settings.repeatPenalty,
     maxTokens: settings.maxTokens,
+    contextSize: settings.contextSize,
   };
 
   requestQueue.enqueue(allMessages, opts, res);

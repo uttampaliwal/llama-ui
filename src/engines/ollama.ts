@@ -69,6 +69,7 @@ export class OllamaEngine extends LLMEngine {
           top_k: options?.topK,
           repeat_penalty: options?.repeatPenalty,
           num_predict: options?.maxTokens,
+          num_ctx: options?.contextSize,
         },
       }),
     });

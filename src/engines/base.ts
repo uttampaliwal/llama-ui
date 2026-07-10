@@ -103,6 +103,7 @@ export interface GenerateOptions {
   topK?: number;
   repeatPenalty?: number;
   maxTokens?: number;
+  contextSize?: number;
 }
 
 export interface GenerateResult {
