@@ -1,0 +1,5 @@
+# Vendored third-party libraries — excluded from GitHub language stats
+public/vendor/** linguist-vendored
+
+# Normalize line endings
+* text=auto

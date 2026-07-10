@@ -10,8 +10,12 @@ src/**/*.js
 *.js.map
 *.tsbuildinfo
 
-# Vendored MathJax is regenerated from node_modules by `npm run vendor`
+# Vendored files are regenerated from node_modules by `npm run vendor`
 public/vendor/mathjax/
+public/vendor/highlight/
+public/vendor/libs/jszip.min.js
+public/vendor/libs/mammoth.min.js
+public/vendor/libs/xlsx.full.min.js
 
 # Machine-specific model metadata (contains local absolute paths)
 model-metadata.json
