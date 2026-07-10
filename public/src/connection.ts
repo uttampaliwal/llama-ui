@@ -38,15 +38,20 @@ function showProgress(pct: number): void {
 
 export async function ensureServerRunning(modelId: string, provider?: string): Promise<boolean> {
   if (!modelId) return false;
-
   switching = true;
+
+  // Local engines (those that spawn their own server process) need to be
+  // (re)started whenever the model changes. API-style engines (Ollama, vLLM,
+  // LM Studio, OpenAI, KoboldCpp) are external services: switching only has to
+  // point the active engine at a different model/tag.
+  const isLocalEngine = provider === 'llamacpp';
 
   try {
     const status = await api<StatusResponse>('/api/status');
-    if (status.running && status.engine === provider) {
+
+    // Same API engine already running: just change the active model.
+    if (status.running && !isLocalEngine && status.engine === provider) {
       switching = false;
-      // Server is up on the same engine: switch the active model without
-      // restarting.
       await api('/api/server/switch', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -56,20 +61,32 @@ export async function ensureServerRunning(modelId: string, provider?: string): P
       await checkStatus();
       return true;
     }
-    if (status.running && provider && status.engine !== provider) {
-      // Engine mismatch: switch the whole backend (stops the old one).
-      await api('/api/server/select', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ id: modelId, provider }),
-      });
-      (await import('./models.js')).updateModelInfo();
-      await checkStatus();
+
+    // Different engine, a not-yet-running API engine, or a local engine whose
+    // model changed: switch the whole backend (stops any previous engine and
+    // sets the active engine + model). For API engines this is enough; for
+    // local engines we then spawn the process below.
+    await api('/api/server/select', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ id: modelId, provider }),
+    });
+    (await import('./models.js')).updateModelInfo();
+    await checkStatus();
+
+    if (!isLocalEngine) {
+      switching = false;
+      return true;
+    }
+
+    // Local engine: spawn/restart the server process with the chosen model.
+    const after = await api<StatusResponse>('/api/status');
+    if (after.running) {
       switching = false;
       return true;
     }
   } catch {
-    // Server might not be running
+    // fall through to the start path below
   }
 
   const s = collectSettings();
