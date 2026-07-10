@@ -3,6 +3,7 @@ import path from 'path';
 import fs from 'fs';
 import os from 'os';
 import crypto from 'crypto';
+import { execSync } from 'child_process';
 import { engines, type EngineId } from './src/engines/index';
 import type { ChatMessage, GenerateOptions } from './src/engines/base';
 import { plugins } from './src/plugins/index';
@@ -266,7 +267,6 @@ loadSettings();
 
 function getGpuInfo(): { name: string; used: number; total: number; utilization: number } | null {
   try {
-    const { execSync } = require('child_process');
     const out = execSync(
       'nvidia-smi --query-gpu=name,memory.used,memory.total,utilization.gpu --format=csv,noheader,nounits',
       { encoding: 'utf-8', timeout: 3000 },

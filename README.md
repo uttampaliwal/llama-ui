@@ -10,7 +10,6 @@
 
 <p align="center">
   <a href="#features">Features</a> •
-  <a href="#demo">Demo</a> •
   <a href="#quick-start">Quick Start</a> •
   <a href="#architecture">Architecture</a> •
   <a href="#comparison">Comparison</a> •
@@ -19,21 +18,7 @@
 
 ---
 
-## Demo
-
-![ModelVerse Demo](docs/demo.gif)
-
-> _A demo GIF showing chat streaming, model switching, theme changes, and the image viewer._
-
-## Screenshots
-
-| Chat View                          | Settings                                   | Model Selection                        |
-| ---------------------------------- | ------------------------------------------ | -------------------------------------- |
-| ![Chat](docs/screenshots/chat.png) | ![Settings](docs/screenshots/settings.png) | ![Models](docs/screenshots/models.png) |
-
-| Image Viewer                                       | Search                                 | Mobile                                 |
-| -------------------------------------------------- | -------------------------------------- | -------------------------------------- |
-| ![Image Viewer](docs/screenshots/image-viewer.png) | ![Search](docs/screenshots/search.png) | ![Mobile](docs/screenshots/mobile.png) |
+<!-- Screenshots and demo GIF to be added -->
 
 ---
 

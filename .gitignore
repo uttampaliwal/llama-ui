@@ -13,6 +13,12 @@ src/**/*.js
 # Vendored MathJax is regenerated from node_modules by `npm run vendor`
 public/vendor/mathjax/
 
+# Machine-specific model metadata (contains local absolute paths)
+model-metadata.json
+
+# Temporary build artifacts
+node_modules/.vite-temp/
+
 # Test & benchmark output
 benchmark-results.json
 coverage/

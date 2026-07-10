@@ -7,7 +7,7 @@
     "vendor": "node scripts/vendor.mjs",
     "postinstall": "node scripts/vendor.mjs",
     "start": "npm run build && node server.js",
-    "dev": "npm run build && node server.js",
+    "dev": "tsc -p tsconfig.server.json && node --watch server.js",
     "build": "tsc && tsc -p tsconfig.server.json",
     "typecheck": "tsc --noEmit && tsc -p tsconfig.server.json --noEmit",
     "watch": "tsc --watch",
@@ -22,7 +22,6 @@
     "prepare": "husky"
   },
   "dependencies": {
-    "cors": "^2.8.5",
     "express": "^5.2.1",
     "highlight.js": "^11.9.0",
     "mathjax": "^3.2.2",

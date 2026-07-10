@@ -57,11 +57,21 @@ export default tseslint.config(
     },
   },
   {
+    files: ['scripts/**/*.mjs'],
+    languageOptions: {
+      parserOptions: { project: false },
+    },
+    rules: {
+      'no-unused-vars': 'warn',
+      'no-undef': 'off',
+      'no-console': 'off',
+    },
+  },
+  {
     ignores: [
       '**/*.js',
       'public/vendor/',
       'node_modules/',
-      'scripts/',
       'commitlint.config.mjs',
       'eslint.config.mjs',
     ],
