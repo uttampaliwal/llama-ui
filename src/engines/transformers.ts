@@ -1,5 +1,5 @@
-import { Readable } from 'stream';
 import { LLMEngine, type ModelInfo, type ChatMessage, type GenerateOptions, type GenerateResult, type HealthStatus, type EngineConfig } from './base';
+import { toGenerator } from './stream-utils';
 
 export interface TransformersConfig extends EngineConfig {
   model: string;
@@ -34,20 +34,9 @@ export class TransformersEngine extends LLMEngine {
   }
 
   async generate(messages: ChatMessage[], options?: GenerateOptions): Promise<GenerateResult> {
-    const stream = new Readable({ read() {} });
-
-    (async () => {
-      try {
-        const prompt = messages.map((m) => `${m.role}: ${m.content}`).join('\n') + '\nassistant:';
-        stream.push(`data: ${JSON.stringify({ choices: [{ delta: { content: `[Transformers.js] Model: ${this.engineConfig.model}\n\nPrompt received. Full implementation requires @huggingface/transformers.\n` } }] })}\n\n`);
-        stream.push('data: [DONE]\n\n');
-        stream.push(null);
-      } catch (e) {
-        stream.destroy(e as Error);
-      }
-    })();
-
-    return { stream };
+    const prompt = messages.map((m) => `${m.role}: ${m.content}`).join('\n') + '\nassistant:';
+    const text = `[Transformers.js] Model: ${this.engineConfig.model}\n\nPrompt received. Full implementation requires @huggingface/transformers.\n`;
+    return { stream: toGenerator(text) };
   }
 
   async health(): Promise<HealthStatus> {

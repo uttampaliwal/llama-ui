@@ -1,8 +1,8 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.TransformersEngine = void 0;
-const stream_1 = require("stream");
 const base_1 = require("./base");
+const stream_utils_1 = require("./stream-utils");
 class TransformersEngine extends base_1.LLMEngine {
     id = 'transformers';
     name = 'Transformers.js';
@@ -25,19 +25,9 @@ class TransformersEngine extends base_1.LLMEngine {
         return [];
     }
     async generate(messages, options) {
-        const stream = new stream_1.Readable({ read() { } });
-        (async () => {
-            try {
-                const prompt = messages.map((m) => `${m.role}: ${m.content}`).join('\n') + '\nassistant:';
-                stream.push(`data: ${JSON.stringify({ choices: [{ delta: { content: `[Transformers.js] Model: ${this.engineConfig.model}\n\nPrompt received. Full implementation requires @huggingface/transformers.\n` } }] })}\n\n`);
-                stream.push('data: [DONE]\n\n');
-                stream.push(null);
-            }
-            catch (e) {
-                stream.destroy(e);
-            }
-        })();
-        return { stream };
+        const prompt = messages.map((m) => `${m.role}: ${m.content}`).join('\n') + '\nassistant:';
+        const text = `[Transformers.js] Model: ${this.engineConfig.model}\n\nPrompt received. Full implementation requires @huggingface/transformers.\n`;
+        return { stream: (0, stream_utils_1.toGenerator)(text) };
     }
     async health() {
         return { status: 'ok', engine: this.id };

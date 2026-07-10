@@ -1,5 +1,3 @@
-import { Readable } from 'stream';
-
 export interface ModelInfo {
   name: string;
   id: string;
@@ -23,7 +21,7 @@ export interface GenerateOptions {
 }
 
 export interface GenerateResult {
-  stream: Readable;
+  stream: AsyncGenerator<string>;
 }
 
 export interface HealthStatus {

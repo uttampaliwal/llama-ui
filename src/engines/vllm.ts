@@ -1,5 +1,5 @@
-import { Readable } from 'stream';
 import { LLMEngine, type ModelInfo, type ChatMessage, type GenerateOptions, type GenerateResult, type HealthStatus, type EngineConfig } from './base';
+import { openaiStreamToGenerator } from './stream-utils';
 
 export interface VLLMConfig extends EngineConfig {
   baseUrl: string;
@@ -65,36 +65,7 @@ export class VLLMEngine extends LLMEngine {
       throw new Error(`vLLM error ${res.status}`);
     }
 
-    if (!res.body) {
-      throw new Error('No response body');
-    }
-
-    const reader = res.body.getReader();
-    const decoder = new TextDecoder();
-    const stream = new Readable({ read() {} });
-
-    (async () => {
-      try {
-        let buffer = '';
-        while (true) {
-          const { done, value } = await reader.read();
-          if (done) break;
-          buffer += decoder.decode(value, { stream: true });
-          const lines = buffer.split('\n');
-          buffer = lines.pop() || '';
-          for (const line of lines) {
-            const trimmed = line.trim();
-            if (trimmed) stream.push(trimmed + '\n\n');
-          }
-        }
-        if (buffer.trim()) stream.push(buffer.trim() + '\n\n');
-        stream.push(null);
-      } catch (e) {
-        stream.destroy(e as Error);
-      }
-    })();
-
-    return { stream };
+    return { stream: openaiStreamToGenerator(res) };
   }
 
   async health(): Promise<HealthStatus> {

@@ -1,8 +1,8 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.LMStudioEngine = void 0;
-const stream_1 = require("stream");
 const base_1 = require("./base");
+const stream_utils_1 = require("./stream-utils");
 class LMStudioEngine extends base_1.LLMEngine {
     id = 'lmstudio';
     name = 'LM Studio';
@@ -56,37 +56,7 @@ class LMStudioEngine extends base_1.LLMEngine {
         if (!res.ok) {
             throw new Error(`LM Studio error ${res.status}`);
         }
-        if (!res.body) {
-            throw new Error('No response body');
-        }
-        const reader = res.body.getReader();
-        const decoder = new TextDecoder();
-        const stream = new stream_1.Readable({ read() { } });
-        (async () => {
-            try {
-                let buffer = '';
-                while (true) {
-                    const { done, value } = await reader.read();
-                    if (done)
-                        break;
-                    buffer += decoder.decode(value, { stream: true });
-                    const lines = buffer.split('\n');
-                    buffer = lines.pop() || '';
-                    for (const line of lines) {
-                        const trimmed = line.trim();
-                        if (trimmed)
-                            stream.push(trimmed + '\n\n');
-                    }
-                }
-                if (buffer.trim())
-                    stream.push(buffer.trim() + '\n\n');
-                stream.push(null);
-            }
-            catch (e) {
-                stream.destroy(e);
-            }
-        })();
-        return { stream };
+        return { stream: (0, stream_utils_1.openaiStreamToGenerator)(res) };
     }
     async health() {
         try {

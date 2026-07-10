@@ -145,40 +145,35 @@ class RequestQueue {
       return;
     }
 
-    // "running" event already sent by enqueue() or dequeueNext()
-
     try {
       const result = await engine.generate(entry.messages, entry.options);
 
-      result.stream.on('data', (chunk: Buffer) => {
-        entry.res.write(chunk);
-      });
-
-      result.stream.on('end', () => {
+      try {
+        for await (const token of result.stream) {
+          if (token) {
+            entry.res.write(`data: ${JSON.stringify({ choices: [{ delta: { content: token } }] })}\n\n`);
+          }
+        }
+        entry.res.write('data: [DONE]\n\n');
         entry.res.end();
         entry.status = 'completed';
         console.log('[CHAT] Stream complete');
-        this.currentId = null;
-        this.processing = false;
-        this.entries = this.entries.filter(e => e.id !== entry.id);
-        this.dequeueNext();
-      });
-
-      result.stream.on('error', (err: Error) => {
-        console.error('[CHAT] Stream error:', err.message);
+      } catch (streamErr) {
+        console.error('[CHAT] Stream error:', (streamErr as Error).message);
         if (!entry.res.headersSent) {
-          entry.res.status(500).json({ error: err.message });
+          entry.res.status(500).json({ error: (streamErr as Error).message });
         } else {
-          sendSSE(entry.res, { error: err.message });
+          sendSSE(entry.res, { error: (streamErr as Error).message });
           entry.res.end();
         }
         entry.status = 'failed';
-        entry.error = err.message;
-        this.currentId = null;
-        this.processing = false;
-        this.entries = this.entries.filter(e => e.id !== entry.id);
-        this.dequeueNext();
-      });
+        entry.error = (streamErr as Error).message;
+      }
+
+      this.currentId = null;
+      this.processing = false;
+      this.entries = this.entries.filter(e => e.id !== entry.id);
+      this.dequeueNext();
     } catch (e) {
       console.error('[CHAT] Error:', (e as Error).message);
       if (!entry.res.headersSent) {

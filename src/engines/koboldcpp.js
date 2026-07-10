@@ -1,8 +1,8 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.KoboldCppEngine = void 0;
-const stream_1 = require("stream");
 const base_1 = require("./base");
+const stream_utils_1 = require("./stream-utils");
 class KoboldCppEngine extends base_1.LLMEngine {
     id = 'koboldcpp';
     name = 'KoboldCpp';
@@ -40,13 +40,7 @@ class KoboldCppEngine extends base_1.LLMEngine {
         }
         const data = await res.json();
         const text = data.results?.[0]?.text || '';
-        const stream = new stream_1.Readable({ read() { } });
-        (async () => {
-            stream.push(`data: ${JSON.stringify({ choices: [{ delta: { content: text } }] })}\n\n`);
-            stream.push('data: [DONE]\n\n');
-            stream.push(null);
-        })();
-        return { stream };
+        return { stream: (0, stream_utils_1.toGenerator)(text) };
     }
     async health() {
         try {

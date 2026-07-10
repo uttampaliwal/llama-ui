@@ -1,5 +1,5 @@
-import { Readable } from 'stream';
 import { LLMEngine, type ModelInfo, type ChatMessage, type GenerateOptions, type GenerateResult, type HealthStatus, type EngineConfig } from './base';
+import { toGenerator } from './stream-utils';
 
 export interface KoboldCppConfig extends EngineConfig {
   baseUrl: string;
@@ -52,14 +52,7 @@ export class KoboldCppEngine extends LLMEngine {
     const data = await res.json() as { results: Array<{ text: string }> };
     const text = data.results?.[0]?.text || '';
 
-    const stream = new Readable({ read() {} });
-    (async () => {
-      stream.push(`data: ${JSON.stringify({ choices: [{ delta: { content: text } }] })}\n\n`);
-      stream.push('data: [DONE]\n\n');
-      stream.push(null);
-    })();
-
-    return { stream };
+    return { stream: toGenerator(text) };
   }
 
   async health(): Promise<HealthStatus> {

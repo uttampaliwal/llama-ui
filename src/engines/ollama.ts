@@ -1,5 +1,5 @@
-import { Readable } from 'stream';
 import { LLMEngine, type ModelInfo, type ChatMessage, type GenerateOptions, type GenerateResult, type HealthStatus, type EngineConfig } from './base';
+import { ollamaStreamToGenerator } from './stream-utils';
 
 export interface OllamaConfig extends EngineConfig {
   baseUrl: string;
@@ -67,42 +67,7 @@ export class OllamaEngine extends LLMEngine {
       throw new Error(`Ollama error ${res.status}`);
     }
 
-    if (!res.body) {
-      throw new Error('No response body');
-    }
-
-    const reader = res.body.getReader();
-    const decoder = new TextDecoder();
-
-    const stream = new Readable({ read() {} });
-
-    (async () => {
-      try {
-        let buffer = '';
-        while (true) {
-          const { done, value } = await reader.read();
-          if (done) break;
-          buffer += decoder.decode(value, { stream: true });
-          const lines = buffer.split('\n');
-          buffer = lines.pop() || '';
-          for (const line of lines) {
-            if (!line.trim()) continue;
-            try {
-              const json = JSON.parse(line);
-              if (json.message?.content) {
-                stream.push(`data: ${JSON.stringify({ choices: [{ delta: { content: json.message.content } }] })}\n\n`);
-              }
-            } catch {}
-          }
-        }
-        stream.push('data: [DONE]\n\n');
-        stream.push(null);
-      } catch (e) {
-        stream.destroy(e as Error);
-      }
-    })();
-
-    return { stream };
+    return { stream: ollamaStreamToGenerator(res) };
   }
 
   async health(): Promise<HealthStatus> {

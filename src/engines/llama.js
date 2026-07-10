@@ -8,8 +8,8 @@ const child_process_1 = require("child_process");
 const path_1 = __importDefault(require("path"));
 const fs_1 = __importDefault(require("fs"));
 const net_1 = __importDefault(require("net"));
-const stream_1 = require("stream");
 const base_1 = require("./base");
+const stream_utils_1 = require("./stream-utils");
 const VISION_ARCHS = ['llava', 'qwen2vl', 'qwen2.5vl', 'qwen3vl', 'gemma4vl', 'idefics2', 'paligemma', 'florence2', 'minicpmv', 'xcomposer2'];
 const REASONING_ARCHS = ['qwq', 'deepseek', 'qwen3', 'gemma4'];
 function getModelCapabilities(modelPath) {
@@ -362,41 +362,7 @@ class LlamaCppEngine extends base_1.LLMEngine {
             const err = await res.text();
             throw new Error(`LLM error ${res.status}: ${err}`);
         }
-        if (!res.body) {
-            throw new Error('No response body');
-        }
-        const reader = res.body.getReader();
-        const decoder = new TextDecoder();
-        let buffer = '';
-        const stream = new stream_1.Readable({
-            read() { },
-        });
-        (async () => {
-            try {
-                while (true) {
-                    const { done, value } = await reader.read();
-                    if (done)
-                        break;
-                    if (!value)
-                        continue;
-                    buffer += decoder.decode(value, { stream: true });
-                    const lines = buffer.split('\n');
-                    buffer = lines.pop() || '';
-                    for (const line of lines) {
-                        const trimmed = line.trim();
-                        if (trimmed)
-                            stream.push(trimmed + '\n\n');
-                    }
-                }
-                if (buffer.trim())
-                    stream.push(buffer.trim() + '\n\n');
-                stream.push(null);
-            }
-            catch (e) {
-                stream.destroy(e);
-            }
-        })();
-        return { stream };
+        return { stream: (0, stream_utils_1.openaiStreamToGenerator)(res) };
     }
     async health() {
         if (!this.process) {
