@@ -306,13 +306,30 @@ class LlamaCppEngine extends base_1.LLMEngine {
                     }
                     else if (item.name.endsWith('.gguf') && !item.name.toLowerCase().includes('mmproj')) {
                         const stats = fs_1.default.statSync(fullPath);
+                        const caps = getModelCapabilities(fullPath);
+                        // Auto-generate metadata
+                        const { getOrCreateMetadata } = require('../model-metadata');
+                        const metadata = getOrCreateMetadata(fullPath, this.id, {
+                            vision: caps.includes('vision'),
+                            reasoning: caps.includes('reasoning'),
+                            tools: caps.includes('tools'),
+                        });
                         models.push({
                             name: item.name,
                             id: fullPath,
                             size: stats.size,
                             sizeFormatted: formatBytes(stats.size),
                             provider: this.id,
-                            capabilities: getModelCapabilities(fullPath),
+                            capabilities: caps,
+                            // Extended metadata
+                            parameters: metadata.parameters,
+                            quantization: metadata.quantization,
+                            architecture: metadata.architecture,
+                            contextLength: metadata.contextLength,
+                            languages: metadata.languages,
+                            tags: metadata.tags,
+                            memoryRequired: metadata.memoryRequired,
+                            description: metadata.description,
                         });
                     }
                 }

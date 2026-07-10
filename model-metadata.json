@@ -1,0 +1,163 @@
+[
+  {
+    "id": "Meta-Llama-3.1-8B-Instruct-Q2_K_9nmeju",
+    "name": "Meta-Llama-3.1-8B-Instruct-Q2_K.gguf",
+    "path": "C:\\Users\\uttam\\.lmstudio\\models\\bartowski\\Meta-Llama-3.1-8B-Instruct-GGUF\\Meta-Llama-3.1-8B-Instruct-Q2_K.gguf",
+    "provider": "llamacpp",
+    "vision": false,
+    "embedding": false,
+    "reasoning": false,
+    "tools": false,
+    "code": false,
+    "parameters": "8B",
+    "quantization": "Q2_K",
+    "architecture": "LLaMA",
+    "family": "LLaMA",
+    "languages": [
+      "English"
+    ],
+    "source": "GGUF",
+    "memoryRequired": "~2.4 GB",
+    "tags": [
+      "LLaMA"
+    ],
+    "addedAt": "2026-07-10T05:27:52.924Z",
+    "updatedAt": "2026-07-10T05:27:52.924Z"
+  },
+  {
+    "id": "nvidia_NVIDIA-Nemotron-Nano-9B-v2-Q4_K_S_wo94c4",
+    "name": "nvidia_NVIDIA-Nemotron-Nano-9B-v2-Q4_K_S.gguf",
+    "path": "C:\\Users\\uttam\\.lmstudio\\models\\bartowski\\nvidia_NVIDIA-Nemotron-Nano-9B-v2-GGUF\\nvidia_NVIDIA-Nemotron-Nano-9B-v2-Q4_K_S.gguf",
+    "provider": "llamacpp",
+    "vision": false,
+    "embedding": false,
+    "reasoning": false,
+    "tools": false,
+    "code": false,
+    "quantization": "Q4_K_S",
+    "languages": [
+      "English"
+    ],
+    "source": "GGUF",
+    "memoryRequired": "~3.5 GB",
+    "tags": [],
+    "addedAt": "2026-07-10T05:27:52.926Z",
+    "updatedAt": "2026-07-10T05:27:52.926Z"
+  },
+  {
+    "id": "gemma-3-1B-it-QAT-Q4_0_trrgpu",
+    "name": "gemma-3-1B-it-QAT-Q4_0.gguf",
+    "path": "C:\\Users\\uttam\\.lmstudio\\models\\lmstudio-community\\gemma-3-1B-it-QAT-GGUF\\gemma-3-1B-it-QAT-Q4_0.gguf",
+    "provider": "llamacpp",
+    "vision": false,
+    "embedding": false,
+    "reasoning": false,
+    "tools": false,
+    "code": false,
+    "parameters": "1B",
+    "quantization": "Q4_0",
+    "architecture": "Gemma",
+    "family": "Gemma",
+    "languages": [
+      "English"
+    ],
+    "source": "GGUF",
+    "memoryRequired": "~0.5 GB",
+    "tags": [
+      "Gemma"
+    ],
+    "addedAt": "2026-07-10T05:27:52.927Z",
+    "updatedAt": "2026-07-10T05:27:52.927Z"
+  },
+  {
+    "id": "gemma-4-E4B-it-Q4_K_M_e23p5x",
+    "name": "gemma-4-E4B-it-Q4_K_M.gguf",
+    "path": "C:\\Users\\uttam\\.lmstudio\\models\\lmstudio-community\\gemma-4-E4B-it-GGUF\\gemma-4-E4B-it-Q4_K_M.gguf",
+    "provider": "llamacpp",
+    "vision": false,
+    "embedding": false,
+    "reasoning": false,
+    "tools": false,
+    "code": false,
+    "quantization": "Q4_K_M",
+    "architecture": "Gemma",
+    "family": "Gemma",
+    "languages": [
+      "English"
+    ],
+    "source": "GGUF",
+    "memoryRequired": "~3.5 GB",
+    "tags": [
+      "Gemma"
+    ],
+    "addedAt": "2026-07-10T05:27:52.929Z",
+    "updatedAt": "2026-07-10T05:27:52.929Z"
+  },
+  {
+    "id": "gpt-oss-safeguard-20b-MXFP4_ire755",
+    "name": "gpt-oss-safeguard-20b-MXFP4.gguf",
+    "path": "C:\\Users\\uttam\\.lmstudio\\models\\lmstudio-community\\gpt-oss-safeguard-20b-GGUF\\gpt-oss-safeguard-20b-MXFP4.gguf",
+    "provider": "llamacpp",
+    "vision": false,
+    "embedding": false,
+    "reasoning": false,
+    "tools": false,
+    "code": false,
+    "languages": [
+      "Arabic"
+    ],
+    "source": "GGUF",
+    "memoryRequired": "~3.5 GB",
+    "tags": [],
+    "addedAt": "2026-07-10T05:27:52.930Z",
+    "updatedAt": "2026-07-10T05:27:52.930Z"
+  },
+  {
+    "id": "Qwen3-8B-Q4_K_M_v84e4l",
+    "name": "Qwen3-8B-Q4_K_M.gguf",
+    "path": "C:\\Users\\uttam\\.lmstudio\\models\\lmstudio-community\\Qwen3-8B-GGUF\\Qwen3-8B-Q4_K_M.gguf",
+    "provider": "llamacpp",
+    "vision": false,
+    "embedding": false,
+    "reasoning": false,
+    "tools": false,
+    "code": false,
+    "parameters": "8B",
+    "quantization": "Q4_K_M",
+    "architecture": "Qwen",
+    "family": "Qwen",
+    "languages": [
+      "English"
+    ],
+    "source": "GGUF",
+    "memoryRequired": "~4.0 GB",
+    "tags": [
+      "Qwen"
+    ],
+    "addedAt": "2026-07-10T05:27:52.931Z",
+    "updatedAt": "2026-07-10T05:27:52.931Z"
+  },
+  {
+    "id": "Phi-4-mini-reasoning-UD-Q4_K_XL_1yebiu",
+    "name": "Phi-4-mini-reasoning-UD-Q4_K_XL.gguf",
+    "path": "C:\\Users\\uttam\\.lmstudio\\models\\unsloth\\Phi-4-mini-reasoning-GGUF\\Phi-4-mini-reasoning-UD-Q4_K_XL.gguf",
+    "provider": "llamacpp",
+    "vision": false,
+    "embedding": false,
+    "reasoning": false,
+    "tools": false,
+    "code": false,
+    "architecture": "Phi",
+    "family": "Phi",
+    "languages": [
+      "English"
+    ],
+    "source": "GGUF",
+    "memoryRequired": "~3.5 GB",
+    "tags": [
+      "Phi"
+    ],
+    "addedAt": "2026-07-10T05:27:52.932Z",
+    "updatedAt": "2026-07-10T05:27:52.932Z"
+  }
+]

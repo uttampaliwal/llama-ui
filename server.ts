@@ -19,6 +19,14 @@ import {
   saveProfile,
   deleteProfile,
 } from './src/profiles';
+import {
+  getMetadata,
+  getAllMetadata,
+  updateMetadata,
+  deleteMetadata,
+  searchMetadata,
+  filterMetadata,
+} from './src/model-metadata';
 
 interface ServerSettings {
   port: number;
@@ -274,6 +282,56 @@ app.delete('/api/profiles/:name', (req: express.Request, res: express.Response) 
   const success = deleteProfile(name);
   if (!success) {
     return res.status(404).json({ error: `Profile not found: ${name}` });
+  }
+  res.json({ success: true });
+});
+
+// --- Model Metadata API ---
+
+app.get('/api/metadata', (_req: express.Request, res: express.Response) => {
+  const metadata = getAllMetadata();
+  res.json({ models: metadata });
+});
+
+app.get('/api/metadata/search', (req: express.Request, res: express.Response) => {
+  const { q, architecture, quantization, vision, reasoning, code, tools, tags, languages } = req.query;
+
+  const results = filterMetadata({
+    query: q as string,
+    architecture: architecture as string,
+    quantization: quantization as string,
+    vision: vision === 'true' ? true : vision === 'false' ? false : undefined,
+    reasoning: reasoning === 'true' ? true : reasoning === 'false' ? false : undefined,
+    code: code === 'true' ? true : code === 'false' ? false : undefined,
+    tools: tools === 'true' ? true : tools === 'false' ? false : undefined,
+    tags: tags ? (tags as string).split(',') : undefined,
+    languages: languages ? (languages as string).split(',') : undefined,
+  });
+
+  res.json({ models: results, count: results.length });
+});
+
+app.get('/api/metadata/:id', (req: express.Request, res: express.Response) => {
+  const meta = getMetadata(req.params.id as string);
+  if (!meta) {
+    return res.status(404).json({ error: 'Model not found' });
+  }
+  res.json({ model: meta });
+});
+
+app.put('/api/metadata/:id', (req: express.Request, res: express.Response) => {
+  const updates = req.body as Partial<import('./src/model-metadata').ModelMetadata>;
+  const updated = updateMetadata(req.params.id as string, updates);
+  if (!updated) {
+    return res.status(404).json({ error: 'Model not found' });
+  }
+  res.json({ model: updated });
+});
+
+app.delete('/api/metadata/:id', (req: express.Request, res: express.Response) => {
+  const success = deleteMetadata(req.params.id as string);
+  if (!success) {
+    return res.status(404).json({ error: 'Model not found' });
   }
   res.json({ success: true });
 });
