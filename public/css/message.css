@@ -45,7 +45,7 @@
 .message.assistant {
   background: var(--bg-secondary);
   max-width: 800px;
-  width: fit-content;
+  width: 100%;
   transition: background var(--transition);
 }
 

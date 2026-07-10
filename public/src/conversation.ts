@@ -440,6 +440,11 @@ export function updateStreamingContent(
     const html = formatMd(responseText);
     // Append cursor at end of streaming content
     responseContainer.innerHTML = html + '<span class="cursor" aria-hidden="true"></span>';
+    // Typeset math as it streams so formulas aren't left as raw $...$.
+    renderMath(responseContainer);
+    // Keep virtual-scroll spacer heights in sync (prevents the thinking box
+    // from collapsing while content grows).
+    scheduleWindowUpdate();
   }
 }
 

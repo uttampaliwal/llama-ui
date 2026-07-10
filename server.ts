@@ -445,6 +445,13 @@ app.post('/api/server/select', async (req: express.Request, res: express.Respons
     settings.activeEngine = provider as EngineId;
     saveSettings();
     const engine = engines.getActive();
+    if (provider !== 'llamacpp') {
+      // API-style engines (Ollama, vLLM, LM Studio, OpenAI, KoboldCpp,
+      // transformers) are external services: selecting one marks it running
+      // without spawning a process. The local llama.cpp engine is started by
+      // the client via /api/server/start so it can reload weights.
+      await engine.start(id ?? '');
+    }
     res.json({
       success: true,
       engine: provider,
