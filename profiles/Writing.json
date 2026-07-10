@@ -1,0 +1,13 @@
+{
+  "name": "Writing",
+  "description": "Creative writing, storytelling, and long-form content",
+  "temperature": 0.9,
+  "topP": 0.95,
+  "topK": 50,
+  "repeatPenalty": 1.15,
+  "maxTokens": 4096,
+  "contextSize": 16384,
+  "threads": 4,
+  "gpuLayers": 99,
+  "systemPrompt": "You are a skilled writer. Be creative, expressive, and engaging. Use vivid language and compelling narratives."
+}

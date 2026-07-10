@@ -1,0 +1,13 @@
+{
+  "name": "Fast",
+  "description": "Quick responses with lower latency",
+  "temperature": 0.5,
+  "topP": 0.9,
+  "topK": 20,
+  "repeatPenalty": 1.0,
+  "maxTokens": 1024,
+  "contextSize": 2048,
+  "threads": 8,
+  "gpuLayers": 99,
+  "systemPrompt": "You are a concise assistant. Give brief, direct answers. Avoid unnecessary explanation unless asked."
+}

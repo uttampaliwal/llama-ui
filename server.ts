@@ -11,6 +11,14 @@ import { WebSearchPlugin } from './src/plugins/web-search';
 import { RAGPlugin } from './src/plugins/rag';
 import { PythonPlugin } from './src/plugins/python';
 import { VisionPlugin } from './src/plugins/vision';
+import {
+  listProfiles,
+  getProfile,
+  getActiveProfile,
+  setActiveProfile,
+  saveProfile,
+  deleteProfile,
+} from './src/profiles';
 
 interface ServerSettings {
   port: number;
@@ -21,6 +29,9 @@ interface ServerSettings {
   topK: number;
   repeatPenalty: number;
   maxTokens: number;
+  contextSize: number;
+  threads: number;
+  gpuLayers: number;
   systemPrompt: string;
 }
 
@@ -31,19 +42,25 @@ interface ChatMessageDTO {
 
 const SETTINGS_FILE = path.join(__dirname, 'settings.json');
 
-const defaultSettings: ServerSettings = {
-  port: 3000,
-  activeEngine: 'llamacpp',
-  engineConfigs: {},
-  temperature: 0.7,
-  topP: 0.9,
-  topK: 40,
-  repeatPenalty: 1.1,
-  maxTokens: 4096,
-  systemPrompt: 'You are a helpful assistant.',
-};
+function getDefaultSettings(): ServerSettings {
+  const profile = getActiveProfile();
+  return {
+    port: 3000,
+    activeEngine: 'llamacpp',
+    engineConfigs: {},
+    temperature: profile.temperature,
+    topP: profile.topP,
+    topK: profile.topK,
+    repeatPenalty: profile.repeatPenalty,
+    maxTokens: profile.maxTokens,
+    contextSize: profile.contextSize,
+    threads: profile.threads,
+    gpuLayers: profile.gpuLayers,
+    systemPrompt: profile.systemPrompt,
+  };
+}
 
-let settings: ServerSettings = { ...defaultSettings };
+let settings: ServerSettings = getDefaultSettings();
 
 function loadSettings(): void {
   try {
@@ -208,6 +225,56 @@ app.post('/api/settings', (req: express.Request, res: express.Response) => {
 
   settings = { ...settings, ...(sanitized as Partial<ServerSettings>) };
   saveSettings();
+  res.json({ success: true });
+});
+
+// --- Profile API ---
+
+app.get('/api/profiles', (_req: express.Request, res: express.Response) => {
+  const profiles = listProfiles();
+  res.json({ profiles });
+});
+
+app.get('/api/profiles/active', (_req: express.Request, res: express.Response) => {
+  const profile = getActiveProfile();
+  res.json({ profile });
+});
+
+app.post('/api/profiles/switch', (req: express.Request, res: express.Response) => {
+  const { name } = req.body as { name: string };
+  const success = setActiveProfile(name);
+  if (!success) {
+    return res.status(404).json({ error: `Profile not found: ${name}` });
+  }
+  const profile = getActiveProfile();
+  settings.temperature = profile.temperature;
+  settings.topP = profile.topP;
+  settings.topK = profile.topK;
+  settings.repeatPenalty = profile.repeatPenalty;
+  settings.maxTokens = profile.maxTokens;
+  settings.contextSize = profile.contextSize;
+  settings.threads = profile.threads;
+  settings.gpuLayers = profile.gpuLayers;
+  settings.systemPrompt = profile.systemPrompt;
+  saveSettings();
+  res.json({ success: true, profile });
+});
+
+app.post('/api/profiles/save', (req: express.Request, res: express.Response) => {
+  const { name, ...data } = req.body as { name: string } & Partial<ServerSettings>;
+  if (!name) {
+    return res.status(400).json({ error: 'Profile name required' });
+  }
+  const profile = saveProfile(name, data);
+  res.json({ success: true, profile });
+});
+
+app.delete('/api/profiles/:name', (req: express.Request, res: express.Response) => {
+  const name = req.params.name as string;
+  const success = deleteProfile(name);
+  if (!success) {
+    return res.status(404).json({ error: `Profile not found: ${name}` });
+  }
   res.json({ success: true });
 });
 

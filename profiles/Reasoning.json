@@ -1,0 +1,13 @@
+{
+  "name": "Reasoning",
+  "description": "Deep analysis, logic, and complex problem solving",
+  "temperature": 0.3,
+  "topP": 0.85,
+  "topK": 30,
+  "repeatPenalty": 1.0,
+  "maxTokens": 4096,
+  "contextSize": 32768,
+  "threads": 8,
+  "gpuLayers": 99,
+  "systemPrompt": "You are a logical reasoning expert. Think step by step. Break down complex problems. Show your reasoning clearly before arriving at conclusions."
+}
